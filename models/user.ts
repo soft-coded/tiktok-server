@@ -1,5 +1,23 @@
 import { Schema, model, SchemaTypes } from "mongoose";
 
+export interface UserType {
+  userId?: string;
+  id?: string;
+  username: string;
+  name?: string;
+  email?: string;
+  password?: string;
+  profilePhoto?: string;
+  description?: string;
+  videos?: {
+    uploaded?: string[];
+    liked?: string[];
+  };
+  totalLikes?: number;
+  following?: string[];
+  followers?: string[];
+}
+
 export const ListType = (listType: any) => ({
   type: [listType],
   default: []

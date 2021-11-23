@@ -1,4 +1,3 @@
-import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import asyncHandler from "express-async-handler";
 import { hash, compare } from "bcryptjs";
@@ -6,7 +5,7 @@ import { hash, compare } from "bcryptjs";
 import { CustomError } from "./error";
 import UserModel from "../models/user";
 
-export const login = asyncHandler(async (req: Request, res: Response) => {
+export const login = asyncHandler(async (req, res) => {
   const vRes = validationResult(req);
   if (!vRes.isEmpty())
     throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
@@ -22,7 +21,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const signup = asyncHandler(async (req: Request, res: Response) => {
+export const signup = asyncHandler(async (req, res) => {
   const vRes = validationResult(req);
   if (!vRes.isEmpty())
     throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
