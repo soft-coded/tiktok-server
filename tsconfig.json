@@ -4,8 +4,11 @@
     "esModuleInterop": true,
     "target": "es5",
     "moduleResolution": "node",
-    "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "removeComments": true,
+    "allowJs": false,
+    "allowUnreachableCode": false,
+    "strict": true
   },
-  "lib": ["es2015"]
+  "lib": ["esnext"]
 }

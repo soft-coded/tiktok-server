@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
+import { connect } from "mongoose";
 
 import router from "./routes";
 import { handleError, CustomError } from "./controllers/error";
@@ -12,6 +13,15 @@ const app = express();
 app.use(cors());
 app.use(express.static("public"));
 app.use(express.json({ limit: "30mb" }));
+
+connect(process.env.DB_URL!)
+  .then(() => console.log("Connected to database."))
+  .catch(err => {
+    console.log(err);
+    process.exit(-1);
+  });
+
+// routing
 app.use(router);
 
 // not found
