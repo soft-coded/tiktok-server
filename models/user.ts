@@ -28,7 +28,7 @@ export default model(
     },
     profilePhoto: {
       type: String, // path to the photo in the public/profile-photos folder
-      default: "" // !!!! change to the path of default pfp later !!!!
+      default: "/profile-photos/default.png" // path to default profile photo
     },
     description: {
       type: String,
