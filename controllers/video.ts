@@ -1,4 +1,3 @@
-import { mongo } from "mongoose";
 import asyncHandler from "express-async-handler";
 import { validationResult } from "express-validator";
 import { unlink } from "fs";
@@ -48,8 +47,11 @@ type query = {
 };
 
 export const getVideo = asyncHandler(async (req, res) => {
+  const vRes = validationResult(req);
+  if (!vRes.isEmpty())
+    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
+
   const findRes = await VideoModel.findById(req.params.id, "-__v");
-  if (!findRes) throw new CustomError(400, "Video not found.");
 
   const query: query = req.query;
   if (query.uploader === "1" || query.all === "1")
@@ -90,10 +92,17 @@ export const getVideo = asyncHandler(async (req, res) => {
 });
 
 export const deleteVideo = asyncHandler(async (req, res) => {
-  const user = await UserModel.findOne({ username: req.body.username }, "_id");
-  if (!user) throw new CustomError(401, "Not allowed.");
-  const video = await VideoModel.findById(req.params.id, "uploader video");
-  if (!video) throw new CustomError(400, "Video does not exist.");
+  const vRes = validationResult(req);
+  if (!vRes.isEmpty())
+    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
+  const user = await UserModel.findOne(
+    { username: req.body.username },
+    "totalLikes"
+  );
+  const video = await VideoModel.findById(
+    req.params.id,
+    "uploader video likes"
+  );
   if (!user._id.equals(video.uploader))
     throw new CustomError(403, "You are not allowed to perform this action.");
 
@@ -102,7 +111,8 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     if (err) console.error(err.message);
   });
   UserModel.findByIdAndUpdate(user._id, {
-    $pull: { "videos.uploaded": video._id }
+    $pull: { "videos.uploaded": video._id },
+    $set: { totalLikes: user.totalLikes - video.likes.length }
   }).exec(); // !!! does not work without calling exec() !!!
   // need to remove for whoever liked it as well
   UserModel.updateMany(
@@ -111,7 +121,56 @@ export const deleteVideo = asyncHandler(async (req, res) => {
   ).exec(); // !!! does not work without calling exec() !!!
 
   await VideoModel.findByIdAndDelete(video._id);
-  res.status(200).json({
+  res.status(202).json({
     success: true
+  });
+});
+
+export const likeOrUnlike = asyncHandler(async (req, res) => {
+  const vRes = validationResult(req);
+  if (!vRes.isEmpty())
+    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
+
+  const liker = await UserModel.findOne({ username: req.body.username }, "_id");
+  let liked: boolean; // if the video was liked or disliked, used in response
+  /* not a smart idea to load the entire "likes" array, so just check it in the database. */
+  let video = await VideoModel.findOne(
+    { _id: req.body.videoId, likes: liker._id },
+    "likes uploader"
+  ).lean();
+  if (video) {
+    // update asynchronously
+    liked = false;
+    VideoModel.findByIdAndUpdate(video._id, {
+      $pull: { likes: liker._id }
+    }).exec(); // !! exec() is important !!
+    // update total liked of the uploader
+    UserModel.findById(video.uploader).exec((err, user) => {
+      if (err) return console.warn(err.message);
+      user.totalLikes--;
+      user.save();
+    });
+    // update "liked videos" array of liker
+    UserModel.findByIdAndUpdate(liker._id, {
+      $pull: { "videos.liked": video._id }
+    }).exec();
+  } else {
+    liked = true;
+    video = await VideoModel.findById(req.body.videoId, "uploader");
+    VideoModel.findByIdAndUpdate(video._id, {
+      $push: { likes: liker._id }
+    }).exec(); // !! exec() is important !!
+    UserModel.findById(video.uploader).exec((err, user) => {
+      if (err) return console.warn(err.message);
+      user.totalLikes++;
+      user.save();
+    });
+    UserModel.findByIdAndUpdate(liker._id, {
+      $push: { "videos.liked": video._id }
+    }).exec();
+  }
+  res.status(202).json({
+    success: true,
+    liked
   });
 });
