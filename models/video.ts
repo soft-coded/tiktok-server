@@ -1,21 +1,21 @@
-import { Schema, model, SchemaTypes } from "mongoose";
+import { Schema, model } from "mongoose";
 
-import { ListType } from "./user";
+import { ListType, RefType } from "./user";
 
 const CommentType = {
   postedBy: {
-    type: SchemaTypes.ObjectId, // references a user from users collection
+    ...RefType("User"),
     required: true
   },
   comment: {
     type: String,
     required: true
   },
-  postedTime: {
+  createdAt: {
     type: Date,
-    required: true
+    default: () => new Date()
   },
-  likes: ListType(SchemaTypes.ObjectId)
+  likes: ListType(RefType("User"))
 };
 
 const CommentSchema = new Schema({
@@ -27,17 +27,29 @@ export default model(
   "Video",
   new Schema({
     uploader: {
-      type: SchemaTypes.ObjectId,
+      ...RefType("User"),
       required: true
     },
     video: {
-      type: String, // path to the video in the public/uploads folder
+      type: String, // filename of the video in the public/uploads folder
       required: true
     },
     caption: String,
     music: String,
     tags: [String],
-    likes: ListType(SchemaTypes.ObjectId), // references userId from users collection
-    comments: ListType(CommentSchema)
+    likes: ListType(RefType("User")),
+    comments: ListType(CommentSchema),
+    shares: {
+      type: Number,
+      default: 0
+    },
+    views: {
+      type: Number,
+      default: 0
+    },
+    createdAt: {
+      type: Date,
+      default: () => new Date()
+    }
   })
 );

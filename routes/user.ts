@@ -4,6 +4,6 @@ import { getUserData } from "../controllers/user";
 
 const router = Router();
 
-router.route("/").get(getUserData);
+router.route("/:username").get(getUserData);
 
 export default router;

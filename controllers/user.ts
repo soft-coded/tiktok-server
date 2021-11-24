@@ -4,7 +4,6 @@ import UserModel from "../models/user";
 import { CustomError } from "./error";
 
 type queryData = {
-  username?: string;
   name?: "1";
   email?: "1";
   description?: "1";
@@ -17,12 +16,27 @@ type queryData = {
 };
 
 export const getUserData = asyncHandler(async (req, res) => {
-  let query: queryData = req.query;
-  const user = await UserModel.findOne(
-    { username: query.username },
+  const findRes = await UserModel.findOne(
+    { username: req.params.username },
     "-__v -password"
-  ).lean();
-  if (!user) throw new CustomError(400, "User does not exist.");
+  );
+  if (!findRes) throw new CustomError(400, "User does not exist.");
+
+  let query: queryData = req.query;
+  if (
+    query.videos === "uploaded" ||
+    query.videos === "all" ||
+    query.all === "1"
+  )
+    await findRes.populate("videos.uploaded", "video");
+  if (query.videos === "liked" || query.videos === "all" || query.all === "1")
+    await findRes.populate("videos.liked", "video");
+  if (query.followers === "list" || query.all === "1")
+    await findRes.populate("followers");
+  if (query.following === "list" || query.all === "1")
+    await findRes.populate("following");
+
+  const user = findRes.toObject();
   user.userId = user._id;
   delete user._id;
 

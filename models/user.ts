@@ -23,6 +23,11 @@ export const ListType = (listType: any) => ({
   default: []
 });
 
+export const RefType = (ref: string) => ({
+  type: SchemaTypes.ObjectId,
+  ref
+});
+
 export default model(
   "User",
   new Schema({
@@ -45,22 +50,22 @@ export default model(
       required: true
     },
     profilePhoto: {
-      type: String, // path to the photo in the public/profile-photos folder
-      default: "/profile-photos/default.png" // path to default profile photo
+      type: String, // filename of the photo in the public/profile-photos folder
+      default: "default.png"
     },
     description: {
       type: String,
       default: "No bio yet."
     },
     videos: {
-      uploaded: ListType(SchemaTypes.ObjectId), // references a video from the videos collection
-      liked: ListType(SchemaTypes.ObjectId) // references a video from the videos collection
+      uploaded: ListType(RefType("Video")),
+      liked: ListType(RefType("Video"))
     },
     totalLikes: {
       type: Number,
       default: 0
     },
-    following: ListType(SchemaTypes.ObjectId), // references other users
-    followers: ListType(SchemaTypes.ObjectId) // references other users
+    following: ListType(RefType("User")),
+    followers: ListType(RefType("User"))
   })
 );

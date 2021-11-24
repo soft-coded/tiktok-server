@@ -9,7 +9,11 @@ export const login = asyncHandler(async (req, res) => {
   const vRes = validationResult(req);
   if (!vRes.isEmpty())
     throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
-  const user = await UserModel.findOne({ username: req.body.username });
+
+  const user = await UserModel.findOne(
+    { username: req.body.username },
+    "_id username password"
+  );
   if (!user) throw new CustomError(400, "User does not exist.");
   const passMatches = await compare(req.body.password, user.password);
   if (!passMatches) throw new CustomError(400, "Incorrect password.");
@@ -25,9 +29,10 @@ export const signup = asyncHandler(async (req, res) => {
   const vRes = validationResult(req);
   if (!vRes.isEmpty())
     throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
-  let user = await UserModel.findOne({ username: req.body.username });
+
+  let user: any = await UserModel.exists({ username: req.body.username });
   if (user) throw new CustomError(400, "Username already registered.");
-  user = await UserModel.findOne({ email: req.body.email });
+  user = await UserModel.exists({ email: req.body.email });
   if (user) throw new CustomError(400, "Email already registered.");
 
   delete req.body.confpass; // password confirmation, not needed anymore
