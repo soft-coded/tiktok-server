@@ -1,6 +1,7 @@
+import { mongo } from "mongoose";
 import asyncHandler from "express-async-handler";
 import { validationResult } from "express-validator";
-import { unlinkSync } from "fs";
+import { unlink } from "fs";
 import { join } from "path";
 
 import { CustomError } from "./error";
@@ -96,13 +97,20 @@ export const deleteVideo = asyncHandler(async (req, res) => {
   if (!user._id.equals(video.uploader))
     throw new CustomError(403, "You are not allowed to perform this action.");
 
-  try {
-    unlinkSync(join(process.cwd(), "public", "uploads", video.video));
-  } catch (err) {
-    throw new CustomError(400, "File no longer exists.");
-  }
-  await VideoModel.findByIdAndDelete(video._id);
+  // file deletion and removal doesn't need to be synchronous
+  unlink(join(process.cwd(), "public", "uploads", video.video), err => {
+    if (err) console.error(err.message);
+  });
+  UserModel.findByIdAndUpdate(user._id, {
+    $pull: { "videos.uploaded": video._id }
+  }).exec(); // !!! does not work without calling exec() !!!
+  // need to remove for whoever liked it as well
+  UserModel.updateMany(
+    { "videos.liked": video._id },
+    { $pull: { "videos.liked": video._id } }
+  ).exec(); // !!! does not work without calling exec() !!!
 
+  await VideoModel.findByIdAndDelete(video._id);
   res.status(200).json({
     success: true
   });
