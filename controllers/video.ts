@@ -131,7 +131,10 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
   if (!vRes.isEmpty())
     throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
 
-  const liker = await UserModel.findOne({ username: req.body.username }, "_id");
+  const liker = await UserModel.findOne(
+    { username: req.body.username },
+    "_id"
+  ).lean();
   let liked: boolean; // if the video was liked or disliked, used in response
   /* not a smart idea to load the entire "likes" array, so just check it in the database. */
   let video = await VideoModel.findOne(
