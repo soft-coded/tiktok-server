@@ -27,7 +27,7 @@ export const createVideo = asyncHandler(async (req, res) => {
   });
 });
 
-type query = {
+type Query = {
   uploader?: "1";
   caption?: "1";
   music?: "1";
@@ -42,7 +42,7 @@ type query = {
 export const getVideo = asyncHandler(async (req, res) => {
   const findRes = await VideoModel.findById(req.params.id, "-__v");
 
-  const query: query = req.query;
+  const query: Query = req.query;
   if (query.uploader === "1" || query.all === "1")
     await findRes.populate("uploader", "username name -_id");
   if (query.likes === "list" || query.all === "1")

@@ -7,7 +7,7 @@ import videoRouter from "./video";
 const router = Router();
 
 router.get("/", (_, res) => {
-  res.status(200).send("Connected");
+	res.status(200).send("Connected");
 });
 
 router.use("/auth", authRouter);

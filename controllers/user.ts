@@ -1,7 +1,6 @@
 import asyncHandler from "express-async-handler";
 
 import UserModel from "../models/user";
-import { CustomError } from "./error";
 
 type queryData = {
   name?: "1";
@@ -20,7 +19,6 @@ export const getUserData = asyncHandler(async (req, res) => {
     { username: req.params.username },
     "-__v -password"
   );
-  if (!findRes) throw new CustomError(400, "User does not exist.");
 
   let query: queryData = req.query;
   if (
