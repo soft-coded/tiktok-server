@@ -1,35 +1,17 @@
 import { Router } from "express";
-import { body, CustomValidator, param } from "express-validator";
+import { body, param } from "express-validator";
 
 import {
   createVideo,
   getVideo,
   deleteVideo,
-  likeOrUnlike
+  likeOrUnlike,
+  comment
 } from "../controllers/video";
 import upload from "../configs/multer";
-import UserModel from "../models/user";
-import VideoModel from "../models/video";
+import { isValidUser, isValidVideo, valRes } from "../controllers/validation";
 
 const router = Router();
-
-const isValidUser: CustomValidator = async val => {
-  try {
-    const exists = await UserModel.exists({ username: val });
-    if (!exists) throw "";
-  } catch {
-    throw new Error("User does not exist.");
-  }
-};
-
-const isValidVideo: CustomValidator = async val => {
-  try {
-    const exists = await VideoModel.exists({ _id: val });
-    if (!exists) throw "";
-  } catch {
-    throw new Error("Video does not exist.");
-  }
-};
 
 router
   .route("/create")
@@ -39,28 +21,8 @@ router
       .exists({ checkFalsy: true, checkNull: true })
       .withMessage("Log in to continue.")
       .custom(isValidUser),
+    valRes,
     createVideo
-  );
-
-router
-  .route("/:id")
-  .get(
-    param("id")
-      .exists({ checkFalsy: true, checkNull: true })
-      .withMessage("Invalid URL.")
-      .custom(isValidVideo),
-    getVideo
-  )
-  .delete(
-    param("id")
-      .exists({ checkFalsy: true, checkNull: true })
-      .withMessage("Invalid URL.")
-      .custom(isValidVideo),
-    body("username")
-      .exists({ checkFalsy: true, checkNull: true })
-      .withMessage("Log in to continue.")
-      .custom(isValidUser),
-    deleteVideo
   );
 
 router
@@ -74,7 +36,50 @@ router
       .exists({ checkFalsy: true, checkNull: true })
       .withMessage("Video does not exist.")
       .custom(isValidVideo),
+    valRes,
     likeOrUnlike
+  );
+
+router
+  .route("/comment")
+  .post(
+    body("username")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Log in to continue.")
+      .custom(isValidUser),
+    body("videoId")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Video does not exist.")
+      .custom(isValidVideo),
+    body("comment")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Comment cannot be empty."),
+    valRes,
+    comment
+  );
+
+// route to a single video, keep below everything else
+router
+  .route("/:id")
+  .get(
+    param("id")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Invalid URL.")
+      .custom(isValidVideo),
+    valRes,
+    getVideo
+  )
+  .delete(
+    param("id")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Invalid URL.")
+      .custom(isValidVideo),
+    body("username")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Log in to continue.")
+      .custom(isValidUser),
+    valRes,
+    deleteVideo
   );
 
 export default router;

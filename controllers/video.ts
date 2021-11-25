@@ -1,16 +1,11 @@
 import asyncHandler from "express-async-handler";
-import { validationResult } from "express-validator";
-import { unlink } from "fs";
-import { join } from "path";
 
 import { CustomError } from "./error";
+import { removeFile } from "../configs/fileHander";
 import VideoModel from "../models/video";
 import UserModel from "../models/user";
 
 export const createVideo = asyncHandler(async (req, res) => {
-  const vRes = validationResult(req);
-  if (!vRes.isEmpty())
-    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
   if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
 
   const user = await UserModel.findOne(
@@ -45,12 +40,7 @@ type query = {
   comments?: "num" | "list";
   all?: "1";
 };
-
 export const getVideo = asyncHandler(async (req, res) => {
-  const vRes = validationResult(req);
-  if (!vRes.isEmpty())
-    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
-
   const findRes = await VideoModel.findById(req.params.id, "-__v");
 
   const query: query = req.query;
@@ -92,13 +82,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 });
 
 export const deleteVideo = asyncHandler(async (req, res) => {
-  const vRes = validationResult(req);
-  if (!vRes.isEmpty())
-    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
-  const user = await UserModel.findOne(
-    { username: req.body.username },
-    "totalLikes"
-  );
+  const user = await UserModel.findOne({ username: req.body.username }, "_id");
   const video = await VideoModel.findById(
     req.params.id,
     "uploader video likes"
@@ -107,12 +91,10 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     throw new CustomError(403, "You are not allowed to perform this action.");
 
   // file deletion and removal doesn't need to be synchronous
-  unlink(join(process.cwd(), "public", "uploads", video.video), err => {
-    if (err) console.error(err.message);
-  });
+  removeFile(video.video);
   UserModel.findByIdAndUpdate(user._id, {
     $pull: { "videos.uploaded": video._id },
-    $set: { totalLikes: user.totalLikes - video.likes.length }
+    $inc: { totalLikes: -video.likes.length } // decrement the totalLikes of the uploader
   }).exec(); // !!! does not work without calling exec() !!!
   // need to remove for whoever liked it as well
   UserModel.updateMany(
@@ -127,10 +109,6 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 });
 
 export const likeOrUnlike = asyncHandler(async (req, res) => {
-  const vRes = validationResult(req);
-  if (!vRes.isEmpty())
-    throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
-
   const liker = await UserModel.findOne(
     { username: req.body.username },
     "_id"
@@ -142,17 +120,18 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
     "likes uploader"
   ).lean();
   if (video) {
-    // update asynchronously
     liked = false;
+
+    // update asynchronously
     VideoModel.findByIdAndUpdate(video._id, {
       $pull: { likes: liker._id }
     }).exec(); // !! exec() is important !!
-    // update total liked of the uploader
-    UserModel.findById(video.uploader).exec((err, user) => {
-      if (err) return console.warn(err.message);
-      user.totalLikes--;
-      user.save();
-    });
+
+    // update total likes of the uploader
+    UserModel.findByIdAndUpdate(video.uploader, {
+      $inc: { totalLikes: -1 }
+    }).exec();
+
     // update "liked videos" array of liker
     UserModel.findByIdAndUpdate(liker._id, {
       $pull: { "videos.liked": video._id }
@@ -160,20 +139,24 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
   } else {
     liked = true;
     video = await VideoModel.findById(req.body.videoId, "uploader");
+
     VideoModel.findByIdAndUpdate(video._id, {
       $push: { likes: liker._id }
     }).exec(); // !! exec() is important !!
-    UserModel.findById(video.uploader).exec((err, user) => {
-      if (err) return console.warn(err.message);
-      user.totalLikes++;
-      user.save();
-    });
+
+    UserModel.findByIdAndUpdate(video.uploader, {
+      $inc: { totalLikes: 1 }
+    }).exec();
+
     UserModel.findByIdAndUpdate(liker._id, {
       $push: { "videos.liked": video._id }
     }).exec();
   }
+
   res.status(202).json({
     success: true,
     liked
   });
 });
+
+export const comment = asyncHandler(async (req, res) => {});

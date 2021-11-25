@@ -66,6 +66,11 @@ export default model(
       default: 0
     },
     following: ListType(RefType("User")),
-    followers: ListType(RefType("User"))
+    followers: ListType(RefType("User")),
+    interestedIn: ListType(String), // array of tags, for recommendations
+    createdAt: {
+      type: Date,
+      default: () => new Date()
+    }
   })
 );
