@@ -13,7 +13,8 @@ const reply = {
 	},
 	createdAt: {
 		type: Date,
-		default: Date.now
+		default: Date.now,
+		immutable: true
 	},
 	likes: [RefType("User")]
 };
@@ -38,7 +39,7 @@ export default model(
 		},
 		caption: String,
 		music: String,
-		tags: [String],
+		tags: [String], // used for recommendations
 		likes: [RefType("User")],
 		comments: [CommentSchema],
 		shares: {
@@ -51,7 +52,8 @@ export default model(
 		},
 		createdAt: {
 			type: Date,
-			default: Date.now
+			default: Date.now,
+			immutable: true
 		}
 	})
 );

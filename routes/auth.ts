@@ -31,7 +31,13 @@ router.route("/signup").post(
 		.isLength({ max: 15 })
 		.withMessage("Username too long.")
 		.isLength({ min: 4 })
-		.withMessage("Username too short."),
+		.withMessage("Username too short.")
+		.whitelist(
+			"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789_"
+		)
+		.withMessage(
+			"Username can only contain English letters, digits and underscores."
+		),
 	body("email")
 		.trim()
 		.isEmail()
@@ -40,7 +46,9 @@ router.route("/signup").post(
 	body("name")
 		.trim()
 		.exists({ checkFalsy: true, checkNull: true })
-		.withMessage("Name is required."),
+		.withMessage("Name is required.")
+		.isLength({ max: 30 })
+		.withMessage("Name too long."),
 	body("password")
 		.trim()
 		.isLength({ min: 6 })

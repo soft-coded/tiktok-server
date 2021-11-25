@@ -2,16 +2,27 @@ import multer, { diskStorage, FileFilterCallback } from "multer";
 import { join, extname } from "path";
 import { Request } from "express";
 
-const storage = diskStorage({
-	destination: (_, file, cb) => {
+const videoStorage = diskStorage({
+	destination: (_, __, cb) => {
+		cb(null, join(process.cwd(), "public", "uploads"));
+	},
+	filename: (req, file, cb) => {
 		cb(
 			null,
-			join(
-				process.cwd(),
-				"public",
-				file.fieldname === "video" ? "uploads" : "profile-photos"
-			)
+			req.body.username +
+				"_" +
+				file.fieldname +
+				"_" +
+				Date.now() +
+				Math.round(Math.random() * 1e9) +
+				file.originalname
 		);
+	}
+});
+
+const photoStorage = diskStorage({
+	destination: (_, __, cb) => {
+		cb(null, join(process.cwd(), "public", "profile-photos"));
 	},
 	filename: (req, file, cb) => {
 		cb(
@@ -45,8 +56,8 @@ function fileFilter(
 	cb(null, true);
 }
 
-const upload = multer({
-	storage,
+export const uploadVideo = multer({
+	storage: videoStorage,
 	limits: {
 		fileSize: 20971520, // 20MB
 		files: 1
@@ -54,4 +65,11 @@ const upload = multer({
 	fileFilter
 });
 
-export default upload;
+export const uploadPhoto = multer({
+	storage: photoStorage,
+	limits: {
+		fileSize: 5242880, // 5MB
+		files: 1
+	},
+	fileFilter
+});

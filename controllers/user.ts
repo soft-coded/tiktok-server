@@ -1,9 +1,11 @@
 import asyncHandler from "express-async-handler";
 
 import UserModel from "../models/user";
+import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
+import { removeFile } from "../utils/fileHander";
 
-type queryData = {
+type Query = {
 	name?: "1";
 	email?: "1";
 	description?: "1";
@@ -14,14 +16,13 @@ type queryData = {
 	videos?: "uploaded" | "liked" | "all";
 	all?: "1";
 };
-
-export const getUserData = asyncHandler(async (req, res) => {
+export const getUser = asyncHandler(async (req, res) => {
 	const findRes = await UserModel.findOne(
 		{ username: req.params.username },
-		"-__v -password"
+		"-__v -password -interestedIn -createdAt"
 	);
 
-	let query: queryData = req.query;
+	let query: Query = req.query;
 	if (
 		query.videos === "uploaded" ||
 		query.videos === "all" ||
@@ -62,4 +63,54 @@ export const getUserData = asyncHandler(async (req, res) => {
 	else if (query.videos !== "all") delete user.videos;
 
 	res.status(200).json(successRes({ data: user }));
+});
+
+export const updateUser = asyncHandler(async (req, res) => {
+	const user = await UserModel.findOne(
+		{ username: req.params.username },
+		"name email description username"
+	);
+	const { name, email, description } = req.body;
+
+	if (name) user.name = name;
+	if (email) user.email = email;
+	if (description) user.description = description;
+
+	await user.save();
+
+	res.status(200).json(successRes({ data: user }));
+});
+
+export const updatePfp = asyncHandler(async (req, res) => {
+	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful.");
+
+	// !!! need token verification here !!!!
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"profilePhoto"
+	);
+	// remove the old pfp if it's not the default one
+	// !!! do not remove the default photo !!!
+	if (user.profilePhoto !== "default.png") removeFile(user.profilePhoto, false);
+
+	user.profilePhoto = req.file.filename;
+	await user.save();
+
+	res.status(200).json(successRes());
+});
+
+export const deletePfp = asyncHandler(async (req, res) => {
+	// !!! need token verification here !!!
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"profilePhoto"
+	);
+
+	if (user.profilePhoto !== "default.png") removeFile(user.profilePhoto, false);
+	else throw new CustomError(404, "Profile photo does not exist.");
+
+	user.profilePhoto = "default.png";
+	await user.save();
+
+	res.status(200).json(successRes());
 });

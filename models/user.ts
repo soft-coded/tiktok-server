@@ -65,7 +65,8 @@ export default model(
 		interestedIn: [String], // array of tags, for recommendations
 		createdAt: {
 			type: Date,
-			default: Date.now
+			default: Date.now,
+			immutable: true
 		}
 	})
 );

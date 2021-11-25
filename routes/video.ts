@@ -11,7 +11,7 @@ import {
 	reply,
 	deleteReply
 } from "../controllers/video";
-import upload from "../utils/multer";
+import { uploadVideo } from "../utils/multer";
 import {
 	isValidUser,
 	isValidVideo,
@@ -24,7 +24,7 @@ const router = Router();
 router
 	.route("/create")
 	.post(
-		upload.single("video"),
+		uploadVideo.single("video"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
