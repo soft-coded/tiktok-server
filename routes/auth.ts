@@ -2,6 +2,7 @@ import { Router } from "express";
 import { body } from "express-validator";
 
 import { login, signup } from "../controllers/auth";
+import { valRes, isValidUser } from "../controllers/validation";
 
 const router = Router();
 
@@ -13,11 +14,14 @@ router
 			.isLength({ max: 15 })
 			.withMessage("Username too long.")
 			.isLength({ min: 4 })
-			.withMessage("Username too short."),
+			.withMessage("Username too short.")
+			.bail()
+			.custom(isValidUser),
 		body("password")
 			.trim()
 			.isLength({ min: 6 })
 			.withMessage("Password too short."),
+		valRes,
 		login
 	);
 
@@ -45,6 +49,7 @@ router.route("/signup").post(
 		.trim()
 		.custom((value, { req }) => value === req.body.password)
 		.withMessage("Passwords do not match."),
+	valRes,
 	signup
 );
 

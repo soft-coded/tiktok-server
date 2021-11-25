@@ -5,7 +5,7 @@ import { connect } from "mongoose";
 import { join } from "path";
 
 import router from "./routes";
-import { handleError, CustomError } from "./controllers/error";
+import { handleError, CustomError } from "./utils/error";
 
 config();
 const app = express();

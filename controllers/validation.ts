@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { validationResult, CustomValidator } from "express-validator";
 
-import { CustomError } from "./error";
-import { removeFile } from "../configs/fileHander";
+import { CustomError } from "../utils/error";
+import { removeFile } from "../utils/fileHander";
 import VideoModel from "../models/video";
 import UserModel from "../models/user";
 
@@ -21,6 +21,16 @@ export const isValidVideo: CustomValidator = async val => {
 		if (!exists) throw "";
 	} catch {
 		throw new Error("Video does not exist.");
+	}
+};
+
+export const isValidComment: CustomValidator = async (val, { req }) => {
+	try {
+		const video = await VideoModel.findById(req.body.videoId, "comments._id");
+		const exists = video.comments.id(val);
+		if (!exists) throw "";
+	} catch {
+		throw new Error("Comment does not exist.");
 	}
 };
 

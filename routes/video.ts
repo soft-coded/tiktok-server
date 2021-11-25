@@ -7,10 +7,17 @@ import {
 	deleteVideo,
 	likeOrUnlike,
 	comment,
-	deleteComment
+	deleteComment,
+	reply,
+	deleteReply
 } from "../controllers/video";
-import upload from "../configs/multer";
-import { isValidUser, isValidVideo, valRes } from "../controllers/validation";
+import upload from "../utils/multer";
+import {
+	isValidUser,
+	isValidVideo,
+	isValidComment,
+	valRes
+} from "../controllers/validation";
 
 const router = Router();
 
@@ -87,9 +94,68 @@ router
 		body("commentId")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
-			.withMessage("CommentId cannot be empty."),
+			.withMessage("CommentId cannot be empty.")
+			.bail()
+			.custom(isValidComment),
 		valRes,
 		deleteComment
+	);
+
+router
+	.route("/reply")
+	.post(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		body("videoId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Video does not exist.")
+			.bail()
+			.custom(isValidVideo),
+		body("commentId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("CommentId cannot be empty.")
+			.bail()
+			.custom(isValidComment),
+		body("comment")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Reply cannot be empty.")
+			.isLength({ max: 400 })
+			.withMessage("Reply cannot be more than 400 characters."),
+		valRes,
+		reply
+	)
+	.delete(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		body("videoId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Video does not exist.")
+			.bail()
+			.custom(isValidVideo),
+		body("commentId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("CommentId cannot be empty.")
+			.bail()
+			.custom(isValidComment),
+		body("replyId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("ReplyId cannot be empty."),
+		valRes,
+		deleteReply
 	);
 
 // route to a single video, keep below everything else
