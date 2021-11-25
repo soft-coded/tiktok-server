@@ -6,7 +6,8 @@ import {
   getVideo,
   deleteVideo,
   likeOrUnlike,
-  comment
+  comment,
+  deleteComment
 } from "../controllers/video";
 import upload from "../configs/multer";
 import { isValidUser, isValidVideo, valRes } from "../controllers/validation";
@@ -53,9 +54,26 @@ router
       .custom(isValidVideo),
     body("comment")
       .exists({ checkFalsy: true, checkNull: true })
-      .withMessage("Comment cannot be empty."),
+      .withMessage("Comment cannot be empty.")
+      .isLength({ max: 400 })
+      .withMessage("Comment cannot be more than 400 characters."),
     valRes,
     comment
+  )
+  .delete(
+    body("username")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Log in to continue.")
+      .custom(isValidUser),
+    body("videoId")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("Video does not exist.")
+      .custom(isValidVideo),
+    body("commentId")
+      .exists({ checkFalsy: true, checkNull: true })
+      .withMessage("CommentId cannot be empty."),
+    valRes,
+    deleteComment
   );
 
 // route to a single video, keep below everything else

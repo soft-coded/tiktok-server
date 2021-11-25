@@ -8,10 +8,7 @@ import UserModel from "../models/user";
 export const createVideo = asyncHandler(async (req, res) => {
   if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
 
-  const user = await UserModel.findOne(
-    { username: req.body.username },
-    "videos.uploaded"
-  );
+  const user = await UserModel.findOne({ username: req.body.username }, "_id");
   const video = await VideoModel.create({
     uploader: user._id,
     video: req.file.filename,
@@ -19,8 +16,10 @@ export const createVideo = asyncHandler(async (req, res) => {
     music: req.body.music,
     tags: req.body.tags
   });
-  user.videos.uploaded.push(video._id);
-  await user.save();
+
+  UserModel.findByIdAndUpdate(user._id, {
+    $push: { "videos.uploaded": video._id }
+  }).exec(); // !! exec() is important !!
 
   res.status(201).json({
     success: true,
@@ -96,6 +95,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     $pull: { "videos.uploaded": video._id },
     $inc: { totalLikes: -video.likes.length } // decrement the totalLikes of the uploader
   }).exec(); // !!! does not work without calling exec() !!!
+
   // need to remove for whoever liked it as well
   UserModel.updateMany(
     { "videos.liked": video._id },
@@ -159,4 +159,36 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
   });
 });
 
-export const comment = asyncHandler(async (req, res) => {});
+export const comment = asyncHandler(async (req, res) => {
+  const user = await UserModel.findOne({ username: req.body.username }, "_id");
+  const video = await VideoModel.findById(req.body.videoId, "comments");
+
+  const comment = video.comments.create({
+    postedBy: user._id,
+    comment: req.body.comment
+  });
+  video.comments.push(comment);
+  await video.save();
+
+  res.status(201).json({
+    success: true,
+    commentId: comment._id
+  });
+});
+
+export const deleteComment = asyncHandler(async (req, res) => {
+  const user = await UserModel.findOne({ username: req.body.username }, "_id");
+  const video = await VideoModel.findById(req.body.videoId, "comments");
+  const comment = video.comments.id(req.body.commentId);
+
+  if (!comment) throw new CustomError(404, "Comment does not exist.");
+  if (!comment.postedBy.equals(user._id))
+    throw new CustomError(403, "You are not allowed to perform this action.");
+
+  comment.remove();
+  await video.save();
+
+  res.status(200).json({
+    success: true
+  });
+});
