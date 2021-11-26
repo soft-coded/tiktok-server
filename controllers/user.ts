@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 import UserModel from "../models/user";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
-import { removeFile } from "../utils/fileHander";
+import { removeFile, photoExt, compressPhoto } from "../utils/fileHander";
 
 type Query = {
 	name?: "1";
@@ -92,8 +92,10 @@ export const updatePfp = asyncHandler(async (req, res) => {
 	// remove the old pfp if it's not the default one
 	// !!! do not remove the default photo !!!
 	if (user.profilePhoto !== "default.png") removeFile(user.profilePhoto, false);
+	// compress the photo asynchronously
+	compressPhoto(req.file.path);
 
-	user.profilePhoto = req.file.filename;
+	user.profilePhoto = req.file.filename + photoExt;
 	await user.save();
 
 	res.status(200).json(successRes());

@@ -32,8 +32,7 @@ const photoStorage = diskStorage({
 				file.fieldname +
 				"_" +
 				Date.now() +
-				Math.round(Math.random() * 1e9) +
-				file.originalname
+				Math.round(Math.random() * 1e9)
 		);
 	}
 });
@@ -68,7 +67,7 @@ export const uploadVideo = multer({
 export const uploadPhoto = multer({
 	storage: photoStorage,
 	limits: {
-		fileSize: 5242880, // 5MB
+		fileSize: 2097152, // 2MB
 		files: 1
 	},
 	fileFilter
