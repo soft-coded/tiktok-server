@@ -1,4 +1,6 @@
 import asyncHandler from "express-async-handler";
+import { join } from "path";
+import { statSync, createReadStream } from "fs";
 
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
@@ -214,4 +216,34 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(200).json(successRes());
+});
+
+const chunkSize = 1048576; // 1MB
+export const streamVideo = asyncHandler(async (req, res) => {
+	const video = await VideoModel.findById(
+		req.params.videoId,
+		"video -_id"
+	).lean();
+	const path = join(process.cwd(), "public", "uploads", video.video);
+	const range = req.headers.range!;
+
+	const videoSize = statSync(path).size;
+	// range looks like: "bytes=32123-"
+	const start = Number(range.replace(/\D/g, "")); // get rid of all non digit characters
+	const end = Math.min(start + chunkSize, videoSize - 1);
+
+	// response headers
+	res.writeHead(206, {
+		"Content-Range": `bytes ${start}-${end}/${videoSize}`,
+		"Accept-Ranges": "bytes",
+		"Content-Length": end - start + 1,
+		"Content-Type": "video/mp4"
+	});
+
+	const videoStream = createReadStream(path, {
+		start,
+		end,
+		highWaterMark: chunkSize
+	});
+	videoStream.pipe(res);
 });

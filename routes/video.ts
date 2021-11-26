@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, param } from "express-validator";
+import { body, param, header } from "express-validator";
 
 import {
 	createVideo,
@@ -9,7 +9,8 @@ import {
 	comment,
 	deleteComment,
 	reply,
-	deleteReply
+	deleteReply,
+	streamVideo
 } from "../controllers/video";
 import { uploadVideo } from "../utils/multer";
 import {
@@ -33,6 +34,22 @@ router
 			.custom(isValidUser),
 		valRes,
 		createVideo
+	);
+
+router
+	.route("/stream/:videoId")
+	.get(
+		header("range")
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Range header required."),
+		param("videoId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("VideoId is required.")
+			.bail()
+			.custom(isValidVideo),
+		valRes,
+		streamVideo
 	);
 
 router
