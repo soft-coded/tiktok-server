@@ -8,7 +8,7 @@ import UserModel from "../models/user";
 export const login = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne(
 		{ username: req.body.username },
-		"_id username password"
+		"username password"
 	);
 	const passMatches = await compare(req.body.password, user.password);
 	if (!passMatches) throw new CustomError(400, "Incorrect password.");

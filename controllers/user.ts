@@ -1,4 +1,5 @@
 import asyncHandler from "express-async-handler";
+import { compare, hash } from "bcryptjs";
 
 import UserModel from "../models/user";
 import { CustomError } from "../utils/error";
@@ -115,4 +116,20 @@ export const deletePfp = asyncHandler(async (req, res) => {
 	await user.save();
 
 	res.status(200).json(successRes());
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"password -_id"
+	);
+	// !!! need token verification here !!!
+	const matches = await compare(req.body.oldPassword, user.password);
+	if (!matches) throw new CustomError(400, "Incorrect old password.");
+
+	const hashedPassword = await hash(req.body.newPassword, 10);
+	user.password = hashedPassword;
+	await user.save();
+
+	res.status(200).json(successRes({ username: req.body.username }));
 });

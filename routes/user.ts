@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { body, param } from "express-validator";
 
-import { getUser, updateUser, updatePfp, deletePfp } from "../controllers/user";
+import {
+	getUser,
+	updateUser,
+	updatePfp,
+	deletePfp,
+	changePassword
+} from "../controllers/user";
 import { valRes, isValidUser } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
 
@@ -30,12 +36,34 @@ router
 	);
 
 router
+	.route("/changePassword")
+	.post(
+		body("oldPassword")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Old password is required."),
+		body("newPassword")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("New password cannot be empty."),
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		valRes,
+		changePassword
+	);
+
+router
 	.route("/:username")
 	.get(
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("Invalid URL.")
+			.bail()
 			.custom(isValidUser),
 		valRes,
 		getUser
@@ -45,6 +73,7 @@ router
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("Invalid URL.")
+			.bail()
 			.custom(isValidUser),
 		body("name")
 			.optional()
