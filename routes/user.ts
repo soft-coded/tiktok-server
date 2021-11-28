@@ -9,8 +9,9 @@ import {
 	changePassword,
 	getPfp
 } from "../controllers/user";
-import { valRes, isValidUser } from "../controllers/validation";
+import { valRes, isValidUser, verifyToken } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
+import constants from "../utils/constants";
 
 const router = Router();
 
@@ -34,7 +35,12 @@ router
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		valRes,
+		verifyToken,
 		updatePfp
 	)
 	.delete(
@@ -44,7 +50,12 @@ router
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		valRes,
+		verifyToken,
 		deletePfp
 	);
 
@@ -58,14 +69,21 @@ router
 		body("newPassword")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
-			.withMessage("New password cannot be empty."),
+			.withMessage("New password cannot be empty.")
+			.isLength({ min: constants.passwordMinLen })
+			.withMessage("New password too short."),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		valRes,
+		verifyToken,
 		changePassword
 	);
 
@@ -93,7 +111,7 @@ router
 			.trim()
 			.isLength({ min: 1 })
 			.withMessage("Name cannot be empty.")
-			.isLength({ max: 30 })
+			.isLength({ max: constants.nameMaxLen })
 			.withMessage("Name too long."),
 		body("email")
 			.optional()
@@ -106,9 +124,14 @@ router
 			.trim()
 			.isLength({ min: 1 })
 			.withMessage("Bio cannot be empty.")
-			.isLength({ max: 300 })
+			.isLength({ max: constants.descriptionMaxLen })
 			.withMessage("Bio too long."),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		valRes,
+		verifyToken,
 		updateUser
 	);
 

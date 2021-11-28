@@ -133,9 +133,8 @@ export const deletePfp = asyncHandler(async (req, res) => {
 export const changePassword = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne(
 		{ username: req.body.username },
-		"password -_id"
+		"password"
 	);
-	// !!! need token verification here !!!
 	const matches = await compare(req.body.oldPassword, user.password);
 	if (!matches) throw new CustomError(400, "Incorrect old password.");
 

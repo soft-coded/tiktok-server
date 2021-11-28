@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { hash, compare } from "bcryptjs";
+import { sign } from "jsonwebtoken";
 
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
@@ -13,9 +14,9 @@ export const login = asyncHandler(async (req, res) => {
 	const passMatches = await compare(req.body.password, user.password);
 	if (!passMatches) throw new CustomError(400, "Incorrect password.");
 
-	res
-		.status(200)
-		.json(successRes({ username: user.username, userId: user._id }));
+	const token = sign(user.username, process.env.TOKEN_SECRET!);
+
+	res.status(200).json(successRes({ username: user.username, token }));
 });
 
 export const signup = asyncHandler(async (req, res) => {
@@ -28,8 +29,7 @@ export const signup = asyncHandler(async (req, res) => {
 	delete req.body.confpass; // password confirmation, not needed anymore
 	const hashedPassword = await hash(req.body.password, 10);
 	user = await UserModel.create({ ...req.body, password: hashedPassword });
+	const token = sign(user.username, process.env.TOKEN_SECRET!);
 
-	res
-		.status(201)
-		.json(successRes({ username: user.username, userId: user._id }));
+	res.status(201).json(successRes({ username: user.username, token }));
 });

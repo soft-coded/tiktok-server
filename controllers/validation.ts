@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { validationResult, CustomValidator } from "express-validator";
+import { verify } from "jsonwebtoken";
+import asyncHandler from "express-async-handler";
 
 import { CustomError } from "../utils/error";
 import { removeFile } from "../utils/fileHander";
@@ -42,3 +44,20 @@ export function valRes(req: Request, _: Response, next: NextFunction) {
 	}
 	next();
 }
+
+export const verifyToken = asyncHandler(async (req, _, next) => {
+	try {
+		let username: string;
+		if (req.body.username) username = req.body.username;
+		else username = req.params.username;
+
+		const DBUser = await UserModel.findOne({ username }, "username -_id");
+		const tokenUsername = verify(req.body.token, process.env.TOKEN_SECRET!);
+
+		if (DBUser.username !== tokenUsername) throw "";
+
+		next();
+	} catch {
+		throw new CustomError(403, "You are not allowed to perform this action.");
+	}
+});

@@ -3,6 +3,7 @@ import { body } from "express-validator";
 
 import { login, signup } from "../controllers/auth";
 import { valRes, isValidUser } from "../controllers/validation";
+import constants from "../utils/constants";
 
 const router = Router();
 
@@ -11,15 +12,15 @@ router
 	.post(
 		body("username")
 			.trim()
-			.isLength({ max: 15 })
+			.isLength({ max: constants.usernameMaxLen })
 			.withMessage("Username too long.")
-			.isLength({ min: 4 })
+			.isLength({ min: constants.usernameMinLen })
 			.withMessage("Username too short.")
 			.bail()
 			.custom(isValidUser),
 		body("password")
 			.trim()
-			.isLength({ min: 6 })
+			.isLength({ min: constants.passwordMinLen })
 			.withMessage("Password too short."),
 		valRes,
 		login
@@ -28,13 +29,11 @@ router
 router.route("/signup").post(
 	body("username")
 		.trim()
-		.isLength({ max: 15 })
+		.isLength({ max: constants.usernameMaxLen })
 		.withMessage("Username too long.")
-		.isLength({ min: 4 })
+		.isLength({ min: constants.usernameMinLen })
 		.withMessage("Username too short.")
-		.whitelist(
-			"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789_"
-		)
+		.custom(val => constants.usernameRegex.test(val))
 		.withMessage(
 			"Username can only contain English letters, digits and underscores."
 		),
@@ -47,11 +46,11 @@ router.route("/signup").post(
 		.trim()
 		.exists({ checkFalsy: true, checkNull: true })
 		.withMessage("Name is required.")
-		.isLength({ max: 30 })
+		.isLength({ max: constants.nameMaxLen })
 		.withMessage("Name too long."),
 	body("password")
 		.trim()
-		.isLength({ min: 6 })
+		.isLength({ min: constants.passwordMinLen })
 		.withMessage("Password too short."),
 	body("confpass")
 		.trim()
