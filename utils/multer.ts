@@ -25,9 +25,13 @@ const photoStorage = diskStorage({
 		cb(null, join(process.cwd(), "public", "profile-photos"));
 	},
 	filename: (req, file, cb) => {
+		let username: string;
+		if (req.body.username) username = req.body.username;
+		else username = req.params.username;
+
 		cb(
 			null,
-			req.body.username +
+			username +
 				"_" +
 				file.fieldname +
 				"_" +

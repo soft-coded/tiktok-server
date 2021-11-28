@@ -6,7 +6,8 @@ import {
 	updateUser,
 	updatePfp,
 	deletePfp,
-	changePassword
+	changePassword,
+	getPfp
 } from "../controllers/user";
 import { valRes, isValidUser } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
@@ -14,22 +15,34 @@ import { uploadPhoto } from "../utils/multer";
 const router = Router();
 
 router
-	.route("/profilePhoto")
-	.post(
-		uploadPhoto.single("profilePhoto"),
-		body("username")
+	.route("/profilePhoto/:username")
+	.get(
+		param("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		valRes,
+		getPfp
+	)
+	.post(
+		uploadPhoto.single("profilePhoto"),
+		param("username")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Log in to continue.")
+			.bail()
 			.custom(isValidUser),
 		valRes,
 		updatePfp
 	)
 	.delete(
-		body("username")
+		param("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("Log in to continue.")
+			.bail()
 			.custom(isValidUser),
 		valRes,
 		deletePfp

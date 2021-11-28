@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { compare, hash } from "bcryptjs";
+import { join } from "path";
 
 import UserModel from "../models/user";
 import { CustomError } from "../utils/error";
@@ -82,12 +83,23 @@ export const updateUser = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ data: user }));
 });
 
+export const getPfp = asyncHandler(async (req, res) => {
+	const user = await UserModel.findOne(
+		{ username: req.params.username },
+		"profilePhoto -_id"
+	);
+
+	res.sendFile(
+		join(process.cwd(), "public", "profile-photos", user.profilePhoto)
+	);
+});
+
 export const updatePfp = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful.");
 
 	// !!! need token verification here !!!!
 	const user = await UserModel.findOne(
-		{ username: req.body.username },
+		{ username: req.params.username },
 		"profilePhoto"
 	);
 	// remove the old pfp if it's not the default one
@@ -105,7 +117,7 @@ export const updatePfp = asyncHandler(async (req, res) => {
 export const deletePfp = asyncHandler(async (req, res) => {
 	// !!! need token verification here !!!
 	const user = await UserModel.findOne(
-		{ username: req.body.username },
+		{ username: req.params.username },
 		"profilePhoto"
 	);
 
