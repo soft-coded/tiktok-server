@@ -17,7 +17,8 @@ import {
 	isValidUser,
 	isValidVideo,
 	isValidComment,
-	valRes
+	valRes,
+	verifyToken
 } from "../controllers/validation";
 
 const router = Router();
@@ -26,6 +27,10 @@ router
 	.route("/create")
 	.post(
 		uploadVideo.single("video"),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
@@ -33,6 +38,7 @@ router
 			.bail()
 			.custom(isValidUser),
 		valRes,
+		verifyToken,
 		createVideo
 	);
 
@@ -96,6 +102,10 @@ router
 		comment
 	)
 	.delete(
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
@@ -115,6 +125,7 @@ router
 			.bail()
 			.custom(isValidComment),
 		valRes,
+		verifyToken,
 		deleteComment
 	);
 
@@ -149,6 +160,10 @@ router
 		reply
 	)
 	.delete(
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true, checkNull: true })
@@ -172,6 +187,7 @@ router
 			.exists({ checkFalsy: true, checkNull: true })
 			.withMessage("ReplyId cannot be empty."),
 		valRes,
+		verifyToken,
 		deleteReply
 	);
 
@@ -201,7 +217,12 @@ router
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Token is required."),
 		valRes,
+		verifyToken,
 		deleteVideo
 	);
 

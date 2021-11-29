@@ -2,9 +2,11 @@ import multer, { diskStorage, FileFilterCallback } from "multer";
 import { join, extname } from "path";
 import { Request } from "express";
 
+import constants from "./constants";
+
 const videoStorage = diskStorage({
 	destination: (_, __, cb) => {
-		cb(null, join(process.cwd(), "public", "uploads"));
+		cb(null, join(process.cwd(), "public", constants.videosFolder));
 	},
 	filename: (req, file, cb) => {
 		cb(
@@ -22,7 +24,7 @@ const videoStorage = diskStorage({
 
 const photoStorage = diskStorage({
 	destination: (_, __, cb) => {
-		cb(null, join(process.cwd(), "public", "profile-photos"));
+		cb(null, join(process.cwd(), "public", constants.pfpFolder));
 	},
 	filename: (req, file, cb) => {
 		let username: string;

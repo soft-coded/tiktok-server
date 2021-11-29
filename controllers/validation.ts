@@ -65,6 +65,13 @@ export const verifyToken = asyncHandler(async (req, _, next) => {
 
 		next();
 	} catch {
+		if (req.file)
+			removeFile(
+				req.file.filename,
+				req.file.fieldname === "video"
+					? constants.videosFolder
+					: constants.pfpFolder
+			);
 		throw new CustomError(403, "You are not allowed to perform this action.");
 	}
 });

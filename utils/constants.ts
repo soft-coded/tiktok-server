@@ -6,5 +6,5 @@ export default {
 	nameMaxLen: 30,
 	descriptionMaxLen: 300,
 	pfpFolder: "profile-photos",
-	videosFolder: "videos"
+	videosFolder: "uploads"
 };
