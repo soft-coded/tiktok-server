@@ -5,7 +5,8 @@ import { join } from "path";
 import UserModel from "../models/user";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
-import { removeFile, photoExt, compressPhoto } from "../utils/fileHander";
+import { removeFile } from "../utils/fileHander";
+import constants from "../utils/constants";
 
 type Query = {
 	name?: "1";
@@ -104,11 +105,10 @@ export const updatePfp = asyncHandler(async (req, res) => {
 	);
 	// remove the old pfp if it's not the default one
 	// !!! do not remove the default photo !!!
-	if (user.profilePhoto !== "default.png") removeFile(user.profilePhoto, false);
-	// compress the photo asynchronously
-	compressPhoto(req.file.path);
+	if (user.profilePhoto !== "default.png")
+		removeFile(user.profilePhoto, constants.pfpFolder);
 
-	user.profilePhoto = req.file.filename + photoExt;
+	user.profilePhoto = req.file.filename;
 	await user.save();
 
 	res.status(200).json(successRes());
@@ -121,7 +121,8 @@ export const deletePfp = asyncHandler(async (req, res) => {
 		"profilePhoto"
 	);
 
-	if (user.profilePhoto !== "default.png") removeFile(user.profilePhoto, false);
+	if (user.profilePhoto !== "default.png")
+		removeFile(user.profilePhoto, constants.pfpFolder);
 	else throw new CustomError(404, "Profile photo does not exist.");
 
 	user.profilePhoto = "default.png";

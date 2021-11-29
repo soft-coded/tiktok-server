@@ -7,6 +7,7 @@ import { successRes } from "../utils/success";
 import { removeFile } from "../utils/fileHander";
 import VideoModel from "../models/video";
 import UserModel from "../models/user";
+import constants from "../utils/constants";
 
 export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
@@ -84,7 +85,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 		throw new CustomError(403, "You are not allowed to perform this action.");
 
 	// file deletion and removal doesn't need to be synchronous
-	removeFile(video.video);
+	removeFile(video.video, constants.videosFolder);
 	UserModel.findByIdAndUpdate(user._id, {
 		$pull: { "videos.uploaded": video._id },
 		$inc: { totalLikes: -video.likes.length } // decrement the totalLikes of the uploader

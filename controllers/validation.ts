@@ -7,6 +7,7 @@ import { CustomError } from "../utils/error";
 import { removeFile } from "../utils/fileHander";
 import VideoModel from "../models/video";
 import UserModel from "../models/user";
+import constants from "../utils/constants";
 
 export const isValidUser: CustomValidator = async val => {
 	try {
@@ -39,7 +40,13 @@ export const isValidComment: CustomValidator = async (val, { req }) => {
 export function valRes(req: Request, _: Response, next: NextFunction) {
 	const vRes = validationResult(req);
 	if (!vRes.isEmpty()) {
-		if (req.file) removeFile(req.file.filename, req.file.fieldname === "video");
+		if (req.file)
+			removeFile(
+				req.file.filename,
+				req.file.fieldname === "video"
+					? constants.videosFolder
+					: constants.pfpFolder
+			);
 		throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
 	}
 	next();

@@ -36,7 +36,8 @@ const photoStorage = diskStorage({
 				file.fieldname +
 				"_" +
 				Date.now() +
-				Math.round(Math.random() * 1e9)
+				Math.round(Math.random() * 1e9) +
+				file.originalname
 		);
 	}
 });

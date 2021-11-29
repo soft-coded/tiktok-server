@@ -4,5 +4,7 @@ export default {
 	usernameMaxLen: 15,
 	passwordMinLen: 6,
 	nameMaxLen: 30,
-	descriptionMaxLen: 300
+	descriptionMaxLen: 300,
+	pfpFolder: "profile-photos",
+	videosFolder: "videos"
 };
