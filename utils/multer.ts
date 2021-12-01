@@ -1,51 +1,45 @@
 import multer, { diskStorage, FileFilterCallback } from "multer";
-import { join, extname } from "path";
-import { Request } from "express";
+import { extname } from "path";
 
 import constants from "./constants";
+import { getRelativePath } from "./fileHander";
+
+function generateFileName(username: string, file: Express.Multer.File) {
+	return (
+		username +
+		"_" +
+		file.fieldname +
+		"_" +
+		Date.now() +
+		Math.round(Math.random() * 1e9) +
+		file.originalname
+	);
+}
 
 const videoStorage = diskStorage({
 	destination: (_, __, cb) => {
-		cb(null, join(process.cwd(), "public", constants.videosFolder));
+		cb(null, getRelativePath(constants.videosFolder));
 	},
 	filename: (req, file, cb) => {
-		cb(
-			null,
-			req.body.username +
-				"_" +
-				file.fieldname +
-				"_" +
-				Date.now() +
-				Math.round(Math.random() * 1e9) +
-				file.originalname
-		);
+		cb(null, generateFileName(req.body.username, file));
 	}
 });
 
 const photoStorage = diskStorage({
 	destination: (_, __, cb) => {
-		cb(null, join(process.cwd(), "public", constants.pfpFolder));
+		cb(null, getRelativePath(constants.pfpFolder));
 	},
 	filename: (req, file, cb) => {
 		let username: string;
 		if (req.body.username) username = req.body.username;
 		else username = req.params.username;
 
-		cb(
-			null,
-			username +
-				"_" +
-				file.fieldname +
-				"_" +
-				Date.now() +
-				Math.round(Math.random() * 1e9) +
-				file.originalname
-		);
+		cb(null, generateFileName(username, file));
 	}
 });
 
 function fileFilter(
-	_: Request,
+	_: Express.Request,
 	file: Express.Multer.File,
 	cb: FileFilterCallback
 ) {

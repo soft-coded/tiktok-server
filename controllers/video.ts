@@ -1,10 +1,9 @@
 import asyncHandler from "express-async-handler";
-import { join } from "path";
 import { statSync, createReadStream } from "fs";
 
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
-import { removeFile } from "../utils/fileHander";
+import { removeFile, getRelativePath } from "../utils/fileHander";
 import VideoModel from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
@@ -225,7 +224,7 @@ export const streamVideo = asyncHandler(async (req, res) => {
 		req.params.videoId,
 		"video -_id"
 	).lean();
-	const path = join(process.cwd(), "public", "uploads", video.video);
+	const path = getRelativePath(constants.videosFolder, video.video);
 	const range = req.headers.range!;
 
 	const videoSize = statSync(path).size;

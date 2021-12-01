@@ -1,11 +1,10 @@
 import asyncHandler from "express-async-handler";
 import { compare, hash } from "bcryptjs";
-import { join } from "path";
 
 import UserModel from "../models/user";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
-import { removeFile } from "../utils/fileHander";
+import { removeFile, getRelativePath } from "../utils/fileHander";
 import constants from "../utils/constants";
 
 type Query = {
@@ -90,9 +89,7 @@ export const getPfp = asyncHandler(async (req, res) => {
 		"profilePhoto -_id"
 	);
 
-	res.sendFile(
-		join(process.cwd(), "public", "profile-photos", user.profilePhoto)
-	);
+	res.sendFile(getRelativePath(constants.pfpFolder, user.profilePhoto));
 });
 
 export const updatePfp = asyncHandler(async (req, res) => {
