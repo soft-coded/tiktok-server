@@ -8,6 +8,41 @@ import VideoModel from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
 
+/*
+A single video object will look like this:
+{
+	_id: "...",
+	uploader: userId,
+	video: fileName,
+	caption: "...",
+	music: "...",
+	tags: ["...", ...],
+	comments: [
+		{
+			_id: "...",
+			postedBy: userId,
+			comment: "...",
+			createdAt: Date,
+			likes: [userId, ...],
+			replies: [
+				{
+					_id: "...",
+					postedBy: userId,
+					comment: "...",
+					createdAt: Date,
+					likes: [userId, ...]
+				},
+				...
+			]
+		},
+		...
+	],
+	shares: Num,
+	views: Num,
+	createdAt: Date
+}
+*/
+
 export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
 
@@ -105,44 +140,57 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 		{ username: req.body.username },
 		"_id"
 	).lean();
-	let liked: boolean; // if the video was liked or disliked, used in response
-	/* not a smart idea to load the entire "likes" array, so just check it in the database. */
+
 	let video = await VideoModel.findOne(
 		{ _id: req.body.videoId, likes: liker._id },
 		"likes uploader"
 	).lean();
+
+	let liked = true; // if the video was liked or unliked, used in response
+
 	if (video) {
 		liked = false;
 
 		// update asynchronously
 		VideoModel.findByIdAndUpdate(video._id, {
 			$pull: { likes: liker._id }
-		}).exec(); // !! exec() is important !!
+		})
+			.exec()
+			.catch(err => console.error(err.message)); // !! exec() is important !!
 
 		// update total likes of the uploader
 		UserModel.findByIdAndUpdate(video.uploader, {
 			$inc: { totalLikes: -1 }
-		}).exec();
+		})
+			.exec()
+			.catch(err => console.error(err.message));
 
 		// update "liked videos" array of liker
 		UserModel.findByIdAndUpdate(liker._id, {
 			$pull: { "videos.liked": video._id }
-		}).exec();
+		})
+			.exec()
+			.catch(err => console.error(err.message));
 	} else {
-		liked = true;
 		video = await VideoModel.findById(req.body.videoId, "uploader");
 
 		VideoModel.findByIdAndUpdate(video._id, {
 			$push: { likes: liker._id }
-		}).exec(); // !! exec() is important !!
+		})
+			.exec()
+			.catch(err => console.error(err.message)); // !! exec() is important !!
 
 		UserModel.findByIdAndUpdate(video.uploader, {
 			$inc: { totalLikes: 1 }
-		}).exec();
+		})
+			.exec()
+			.catch(err => console.error(err.message));
 
 		UserModel.findByIdAndUpdate(liker._id, {
 			$push: { "videos.liked": video._id }
-		}).exec();
+		})
+			.exec()
+			.catch(err => console.error(err.message));
 	}
 
 	res.status(202).json(successRes({ liked }));
@@ -177,6 +225,68 @@ export const deleteComment = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(200).json(successRes());
+});
+
+export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	).lean();
+
+	let video = await VideoModel.findOne(
+		{
+			_id: req.body.videoId,
+			comments: { $elemMatch: { _id: req.body.commentId, likes: user._id } }
+		},
+		"comments._id comments.likes comments.postedBy"
+	);
+
+	let liked = true; // if the comment was liked or unliked
+
+	if (video) {
+		liked = false;
+		// remove the like from the comment
+		VideoModel.findByIdAndUpdate(
+			req.body.videoId,
+			{ $pull: { "comments.$[elem].likes": user._id } },
+			{ arrayFilters: [{ "elem._id": req.body.commentId }] }
+		)
+			.exec()
+			.catch(err => console.error(err.message));
+
+		// decrement totalLikes of the comment poster
+		UserModel.findByIdAndUpdate(video.comments[0].postedBy, {
+			$inc: { totalLikes: -1 }
+		})
+			.exec()
+			.catch(err => console.error(err.message));
+	} else {
+		video = await VideoModel.findOne(
+			{
+				_id: req.body.videoId,
+				"comments._id": req.body.commentId
+			},
+			"comments.$"
+		);
+
+		// like the comment
+		VideoModel.findByIdAndUpdate(
+			video._id,
+			{ $push: { "comments.$[elem].likes": user._id } },
+			{ arrayFilters: [{ "elem._id": req.body.commentId }] }
+		)
+			.exec()
+			.catch(err => console.error(err.message));
+
+		// increment the totalLikes of the comment poster
+		UserModel.findByIdAndUpdate(video.comments[0].postedBy, {
+			$inc: { totalLikes: 1 }
+		})
+			.exec()
+			.catch(err => console.error(err.message));
+	}
+
+	res.status(202).json(successRes({ liked }));
 });
 
 export const reply = asyncHandler(async (req, res) => {

@@ -95,7 +95,6 @@ export const getPfp = asyncHandler(async (req, res) => {
 export const updatePfp = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful.");
 
-	// !!! need token verification here !!!!
 	const user = await UserModel.findOne(
 		{ username: req.params.username },
 		"profilePhoto"
@@ -112,7 +111,6 @@ export const updatePfp = asyncHandler(async (req, res) => {
 });
 
 export const deletePfp = asyncHandler(async (req, res) => {
-	// !!! need token verification here !!!
 	const user = await UserModel.findOne(
 		{ username: req.params.username },
 		"profilePhoto"

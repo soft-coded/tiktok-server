@@ -8,6 +8,7 @@ import {
 	likeOrUnlike,
 	comment,
 	deleteComment,
+	likeOrUnlikeComment,
 	reply,
 	deleteReply,
 	streamVideo
@@ -127,6 +128,31 @@ router
 		valRes,
 		verifyToken,
 		deleteComment
+	);
+
+router
+	.route("/likeComment")
+	.post(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		body("videoId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("Video does not exist.")
+			.bail()
+			.custom(isValidVideo),
+		body("commentId")
+			.trim()
+			.exists({ checkFalsy: true, checkNull: true })
+			.withMessage("CommentId cannot be empty.")
+			.bail()
+			.custom(isValidComment),
+		valRes,
+		likeOrUnlikeComment
 	);
 
 router
