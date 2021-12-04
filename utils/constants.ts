@@ -5,6 +5,9 @@ export default {
 	passwordMinLen: 6,
 	nameMaxLen: 30,
 	descriptionMaxLen: 300,
+	captionMaxLen: 150,
+	tagsMaxLen: 200,
+	musicMaxLen: 30,
 	pfpFolder: "profile-photos",
 	videosFolder: "uploads"
 };

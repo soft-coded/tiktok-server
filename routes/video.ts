@@ -4,6 +4,7 @@ import { body, param, header } from "express-validator";
 import {
 	createVideo,
 	getVideo,
+	updateVideo,
 	deleteVideo,
 	likeOrUnlike,
 	comment,
@@ -21,6 +22,7 @@ import {
 	valRes,
 	verifyToken
 } from "../controllers/validation";
+import constants from "../utils/constants";
 
 const router = Router();
 
@@ -37,11 +39,20 @@ router
 		body("caption")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Caption is required."),
+			.withMessage("Caption is required.")
+			.isLength({ max: constants.captionMaxLen })
+			.withMessage("Caption too long."),
 		body("tags")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("At least 1 tag is required."),
+			.withMessage("At least 1 tag is required.")
+			.isLength({ max: constants.tagsMaxLen })
+			.withMessage("Too many tags."),
+		body("music")
+			.optional()
+			.trim()
+			.isLength({ max: constants.musicMaxLen })
+			.withMessage("Music credit too long."),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -237,6 +248,46 @@ router
 			.custom(isValidVideo),
 		valRes,
 		getVideo
+	)
+	.patch(
+		param("id")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Invalid URL.")
+			.bail()
+			.custom(isValidVideo),
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Log in to continue.")
+			.bail()
+			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Token is required."),
+		body("caption")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Caption cannot be empty.")
+			.isLength({ max: constants.captionMaxLen })
+			.withMessage("Caption too long."),
+		body("tags")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("At least 1 tag is required.")
+			.isLength({ max: constants.tagsMaxLen })
+			.withMessage("Too many tags."),
+		body("music")
+			.optional()
+			.trim()
+			.isLength({ max: constants.musicMaxLen })
+			.withMessage("Music credit too long."),
+		valRes,
+		verifyToken,
+		updateVideo
 	)
 	.delete(
 		param("id")

@@ -117,6 +117,18 @@ export const getVideo = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ data: video }));
 });
 
+export const updateVideo = asyncHandler(async (req, res) => {
+	const video = await VideoModel.findById(req.params.id, "caption music tags");
+
+	const { caption, music, tags } = req.body;
+	if (caption) video.caption = caption;
+	if (music) video.music = music;
+	if (tags) video.tags = tags.split(" ");
+
+	await video.save();
+	res.status(200).json(successRes({ videoId: video._id }));
+});
+
 export const deleteVideo = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
 	const video = await VideoModel.findById(
