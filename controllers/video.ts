@@ -78,43 +78,63 @@ type Query = {
 	createdAt?: "1";
 	likes?: "num" | "list";
 	comments?: "num" | "list";
-	all?: "1";
 };
+
+async function getNumOrList(
+	type: "num" | "list",
+	field: string,
+	videoId: string
+) {
+	let vidData: any;
+	if (type === "num") {
+		vidData = await VideoModel.findById(videoId, {
+			num: { $size: "$" + field },
+			_id: 0
+		}).lean();
+
+		return vidData.num;
+	}
+	vidData = await VideoModel.findById(videoId, field + " -_id")
+		.populate(field, "username name -_id")
+		.lean();
+
+	return vidData[field];
+}
+
 export const getVideo = asyncHandler(async (req, res) => {
-	const findRes = await VideoModel.findById(req.params.id, "-__v");
-	findRes.views++;
-	findRes.save();
-
 	const query: Query = req.query;
-	if (query.uploader === "1" || query.all === "1")
-		await findRes.populate("uploader", "username name -_id");
-	if (query.likes === "list" || query.all === "1")
-		await findRes.populate("likes", "username -_id");
-	if (query.comments === "list" || query.all === "1")
-		await findRes.populate("comments", "-replies");
+	let projection = "-__v -uploader -likes -comments -video";
 
-	const video = findRes.toObject();
+	if (query.caption !== "1") projection += " -caption";
+	if (query.music !== "1") projection += " -music";
+	if (query.views !== "1") projection += " -views";
+	if (query.shares !== "1") projection += " -shares";
+	if (query.tags !== "1") projection += " -tags";
+	if (query.createdAt !== "1") projection += " -createdAt";
+
+	const video = await VideoModel.findById(req.params.id, projection).lean();
 	video.videoId = video._id;
 	delete video._id;
 
-	if (query.all === "1") {
-		res.status(200).json(successRes({ data: video }));
-		return;
-	}
-	if (query.uploader !== "1") delete video.uploader;
-	if (query.caption !== "1") delete video.caption;
-	if (query.music !== "1") delete video.music;
-	if (query.views !== "1") delete video.views;
-	if (query.shares !== "1") delete video.shares;
-	if (query.tags !== "1") delete video.tags;
-	if (query.createdAt !== "1") delete video.createdAt;
+	if (query.uploader === "1")
+		video.uploader = await getNumOrList("list", "uploader", req.params.id);
 
-	if (query.likes === "num") video.likes = video.likes.length;
-	else if (query.likes !== "list") delete video.likes;
-	if (query.comments === "num") video.comments = video.comments.length;
-	else if (query.comments !== "list") delete video.comments;
+	if (query.likes === "num")
+		video.likes = await getNumOrList("num", "likes", req.params.id);
+	else if (query.likes === "list")
+		video.likes = await getNumOrList("list", "likes", req.params.id);
 
-	res.status(200).json(successRes({ data: video }));
+	if (query.comments === "num")
+		video.comments = await getNumOrList("num", "comments", req.params.id);
+	else if (query.comments === "list")
+		video.comments = await getNumOrList("list", "comments", req.params.id);
+
+	// increment the number of views on the video
+	VideoModel.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).catch(
+		err => console.error(err)
+	);
+
+	res.status(200).json(successRes(video));
 });
 
 export const updateVideo = asyncHandler(async (req, res) => {
