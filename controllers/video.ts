@@ -47,16 +47,22 @@ export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
 
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
+
+	let { caption, music, tags } = req.body;
+	if (!music) music = req.body.username + " - Original audio";
+	tags = tags.split(" ");
+
 	const video = await VideoModel.create({
 		uploader: user._id,
 		video: req.file.filename,
-		caption: req.body.caption,
-		music: req.body.music,
-		tags: req.body.tags
+		caption: caption,
+		music: music,
+		tags: tags
 	});
 
+	// add video to user's uploaded array and update the interestedIn array
 	UserModel.findByIdAndUpdate(user._id, {
-		$push: { "videos.uploaded": video._id }
+		$push: { "videos.uploaded": video._id, interestedIn: { $each: tags } }
 	}).exec(); // !! exec() is important !!
 
 	res.status(201).json(successRes({ videoId: video._id }));
@@ -76,6 +82,8 @@ type Query = {
 };
 export const getVideo = asyncHandler(async (req, res) => {
 	const findRes = await VideoModel.findById(req.params.id, "-__v");
+	findRes.views++;
+	findRes.save();
 
 	const query: Query = req.query;
 	if (query.uploader === "1" || query.all === "1")

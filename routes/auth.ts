@@ -44,7 +44,7 @@ router.route("/signup").post(
 		.normalizeEmail({ all_lowercase: true }),
 	body("name")
 		.trim()
-		.exists({ checkFalsy: true, checkNull: true })
+		.exists({ checkFalsy: true })
 		.withMessage("Name is required.")
 		.isLength({ max: constants.nameMaxLen })
 		.withMessage("Name too long."),

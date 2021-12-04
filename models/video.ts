@@ -37,9 +37,15 @@ export default model(
 			type: String, // filename of the video in the public/uploads folder
 			required: true
 		},
-		caption: String,
 		music: String,
-		tags: [String], // used for recommendations
+		caption: {
+			type: String,
+			required: true
+		},
+		tags: {
+			type: [String], // used for recommendations
+			required: true
+		},
 		likes: [RefType("User")],
 		comments: [CommentSchema],
 		shares: {

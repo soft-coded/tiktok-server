@@ -20,7 +20,7 @@ router
 	.get(
 		param("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
@@ -31,13 +31,13 @@ router
 		uploadPhoto.single("profilePhoto"),
 		param("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Token is required."),
 		valRes,
 		verifyToken,
@@ -46,13 +46,13 @@ router
 	.delete(
 		param("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Token is required."),
 		valRes,
 		verifyToken,
@@ -64,23 +64,23 @@ router
 	.post(
 		body("oldPassword")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Old password is required."),
 		body("newPassword")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("New password cannot be empty.")
 			.isLength({ min: constants.passwordMinLen })
 			.withMessage("New password too short."),
 		body("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Log in to continue.")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Token is required."),
 		valRes,
 		verifyToken,
@@ -92,7 +92,7 @@ router
 	.get(
 		param("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Invalid URL.")
 			.bail()
 			.custom(isValidUser),
@@ -102,7 +102,7 @@ router
 	.patch(
 		param("username")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Invalid URL.")
 			.bail()
 			.custom(isValidUser),
@@ -128,7 +128,7 @@ router
 			.withMessage("Bio too long."),
 		body("token")
 			.trim()
-			.exists({ checkFalsy: true, checkNull: true })
+			.exists({ checkFalsy: true })
 			.withMessage("Token is required."),
 		valRes,
 		verifyToken,
