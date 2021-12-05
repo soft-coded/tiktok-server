@@ -1,5 +1,4 @@
 import asyncHandler from "express-async-handler";
-import video from "../models/video";
 
 import VideoModel from "../models/video";
 import { successRes } from "../utils/success";
