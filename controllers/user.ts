@@ -18,29 +18,16 @@ type Query = {
 	videos?: "uploaded" | "liked";
 };
 
-async function getNumOrList(
-	type: "num" | "list",
-	field: string,
-	username: string,
-	projection?: any
-) {
-	if (type === "num") {
-		const userData = await UserModel.findOne(
-			{ username },
-			{
-				num: { $size: "$" + field },
-				_id: 0
-			}
-		).lean();
+async function getNum(field: string, username: string) {
+	const userData = await UserModel.findOne(
+		{ username },
+		{
+			num: { $size: "$" + field },
+			_id: 0
+		}
+	).lean();
 
-		return userData.num;
-	}
-
-	const userData = await UserModel.findOne({ username }, field + " -_id")
-		.populate(field, projection)
-		.lean();
-
-	return userData;
+	return userData.num;
 }
 
 export const getUser = asyncHandler(async (req, res) => {
@@ -60,45 +47,43 @@ export const getUser = asyncHandler(async (req, res) => {
 	).lean();
 
 	if (query.followers === "num")
-		user.followers = await getNumOrList(
-			"num",
-			"followers",
-			req.params.username
-		);
+		user.followers = await getNum("followers", req.params.username);
 	else if (query.followers === "list")
 		user.followers = (
-			await getNumOrList(
-				"list",
-				"followers",
-				req.params.username,
-				"username name -_id"
+			await UserModel.findOne(
+				{ username: req.params.username },
+				"followers -_id"
 			)
+				.populate("followers", "username -_id")
+				.lean()
 		).followers;
 
 	if (query.following === "num")
-		user.following = await getNumOrList(
-			"num",
-			"following",
-			req.params.username
-		);
+		user.following = await getNum("following", req.params.username);
 	else if (query.following === "list")
 		user.following = (
-			await getNumOrList(
-				"list",
-				"following",
-				req.params.username,
-				"username name -_id"
+			await UserModel.findOne(
+				{ username: req.params.username },
+				"following -_id"
 			)
+				.populate("following", "username -_id")
+				.lean()
 		).following;
 
 	if (query.videos === "uploaded")
 		user.videos = (
-			await getNumOrList("list", "videos.uploaded", req.params.username, "_id")
-		).videos.uploaded;
+			await UserModel.findOne(
+				{ username: req.params.username },
+				{ videos: { $reverseArray: "$videos.uploaded" }, _id: 0 }
+			).lean()
+		).videos;
 	else if (query.videos === "liked")
 		user.videos = (
-			await getNumOrList("list", "videos.liked", req.params.username, "_id")
-		).videos.liked;
+			await UserModel.findOne(
+				{ username: req.params.username },
+				{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
+			).lean()
+		).videos;
 
 	res.status(200).json(successRes(user));
 });
