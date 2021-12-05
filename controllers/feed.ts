@@ -33,7 +33,7 @@ export const getFeed = asyncHandler(async (_, res) => {
 		{
 			limit: feedLimit,
 			lean: true,
-			sort: "-views -_l -_c -createdAt",
+			sort: "-views -_l -_c createdAt",
 			populate: { path: "uploader", select: "username name -_id" }
 		}
 	);
