@@ -11,60 +11,96 @@ type Query = {
 	name?: "1";
 	email?: "1";
 	description?: "1";
-	profilePhoto?: "1";
 	totalLikes?: "1";
+	createdAt?: "1";
 	following?: "list" | "num";
 	followers?: "list" | "num";
-	videos?: "uploaded" | "liked" | "all";
-	all?: "1";
+	videos?: "uploaded" | "liked";
 };
-export const getUser = asyncHandler(async (req, res) => {
-	const findRes = await UserModel.findOne(
-		{ username: req.params.username },
-		"-__v -password -interestedIn -createdAt"
-	);
 
-	let query: Query = req.query;
-	if (
-		query.videos === "uploaded" ||
-		query.videos === "all" ||
-		query.all === "1"
-	)
-		await findRes.populate("videos.uploaded", "video");
-	if (query.videos === "liked" || query.videos === "all" || query.all === "1")
-		await findRes.populate("videos.liked", "video");
-	if (query.followers === "list" || query.all === "1")
-		await findRes.populate("followers");
-	if (query.following === "list" || query.all === "1")
-		await findRes.populate("following");
+async function getNumOrList(
+	type: "num" | "list",
+	field: string,
+	username: string,
+	projection?: any
+) {
+	if (type === "num") {
+		const userData = await UserModel.findOne(
+			{ username },
+			{
+				num: { $size: "$" + field },
+				_id: 0
+			}
+		).lean();
 
-	const user = findRes.toObject();
-	user.userId = user._id;
-	delete user._id;
-
-	if (query.all === "1") {
-		res.status(200).json(successRes({ data: user }));
-		return;
+		return userData.num;
 	}
-	if (query.name !== "1") delete user.name;
-	if (query.email !== "1") delete user.email;
-	if (query.description !== "1") delete user.description;
-	if (query.totalLikes !== "1") delete user.totalLikes;
-	if (query.profilePhoto !== "1") delete user.profilePhoto;
 
-	if (query.following === "num") user.following = user.following.length;
-	else if (query.following !== "list" && query.following !== "num")
-		delete user.following;
+	const userData = await UserModel.findOne({ username }, field + " -_id")
+		.populate(field, projection)
+		.lean();
 
-	if (query.followers === "num") user.followers = user.followers.length;
-	else if (query.followers !== "list" && query.followers !== "num")
-		delete user.followers;
+	return userData;
+}
 
-	if (query.videos === "uploaded") user.videos = user.videos.uploaded;
-	else if (query.videos === "liked") user.videos = user.videos.liked;
-	else if (query.videos !== "all") delete user.videos;
+export const getUser = asyncHandler(async (req, res) => {
+	const query: Query = req.query;
+	let projection =
+		"-_id -__v -interestedIn -password -profilePhoto -following -followers -videos";
 
-	res.status(200).json(successRes({ data: user }));
+	if (query.name !== "1") projection += " -name";
+	if (query.email !== "1") projection += " -email";
+	if (query.description !== "1") projection += " -description";
+	if (query.totalLikes !== "1") projection += " -totalLikes";
+	if (query.createdAt !== "1") projection += " -createdAt";
+
+	const user = await UserModel.findOne(
+		{ username: req.params.username },
+		projection
+	).lean();
+
+	if (query.followers === "num")
+		user.followers = await getNumOrList(
+			"num",
+			"followers",
+			req.params.username
+		);
+	else if (query.followers === "list")
+		user.followers = (
+			await getNumOrList(
+				"list",
+				"followers",
+				req.params.username,
+				"username name -_id"
+			)
+		).followers;
+
+	if (query.following === "num")
+		user.following = await getNumOrList(
+			"num",
+			"following",
+			req.params.username
+		);
+	else if (query.following === "list")
+		user.following = (
+			await getNumOrList(
+				"list",
+				"following",
+				req.params.username,
+				"username name -_id"
+			)
+		).following;
+
+	if (query.videos === "uploaded")
+		user.videos = (
+			await getNumOrList("list", "videos.uploaded", req.params.username, "_id")
+		).videos.uploaded;
+	else if (query.videos === "liked")
+		user.videos = (
+			await getNumOrList("list", "videos.liked", req.params.username, "_id")
+		).videos.liked;
+
+	res.status(200).json(successRes(user));
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
