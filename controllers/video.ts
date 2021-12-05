@@ -76,29 +76,17 @@ type Query = {
 	shares?: "1";
 	views?: "1";
 	createdAt?: "1";
-	likes?: "num" | "list";
+	likes?: "1";
 	comments?: "num" | "list";
 };
 
-async function getNumOrList(
-	type: "num" | "list",
-	field: string,
-	videoId: string
-) {
-	let vidData: any;
-	if (type === "num") {
-		vidData = await VideoModel.findById(videoId, {
-			num: { $size: "$" + field },
-			_id: 0
-		}).lean();
+async function getNum(field: string, videoId: string) {
+	const vidData = await VideoModel.findById(videoId, {
+		num: { $size: "$" + field },
+		_id: 0
+	}).lean();
 
-		return vidData.num;
-	}
-	vidData = await VideoModel.findById(videoId, field + " -_id")
-		.populate(field, "username name -_id")
-		.lean();
-
-	return vidData[field];
+	return vidData.num;
 }
 
 export const getVideo = asyncHandler(async (req, res) => {
@@ -116,18 +104,40 @@ export const getVideo = asyncHandler(async (req, res) => {
 	video.videoId = video._id;
 	delete video._id;
 
-	if (query.uploader === "1")
-		video.uploader = await getNumOrList("list", "uploader", req.params.id);
+	if (query.uploader === "1") {
+		const vidData = await VideoModel.findById(req.params.id, "uploader -_id")
+			.populate("uploader", "username name -_id")
+			.lean();
 
-	if (query.likes === "num")
-		video.likes = await getNumOrList("num", "likes", req.params.id);
-	else if (query.likes === "list")
-		video.likes = await getNumOrList("list", "likes", req.params.id);
+		video.uploader = vidData.uploader;
+	}
+
+	if (query.likes === "1") video.likes = await getNum("likes", req.params.id);
 
 	if (query.comments === "num")
-		video.comments = await getNumOrList("num", "comments", req.params.id);
-	else if (query.comments === "list")
-		video.comments = await getNumOrList("list", "comments", req.params.id);
+		video.comments = await getNum("comments", req.params.id);
+	else if (query.comments === "list") {
+		const vidData = await VideoModel.findById(req.params.id, {
+			_id: 0,
+			comments: {
+				$map: {
+					input: "$comments",
+					as: "comm",
+					in: {
+						commentId: "$$comm._id",
+						postedBy: "$$comm.postedBy",
+						comment: "$$comm.comment",
+						createdAt: "$$comm.createdAt",
+						likes: { $size: "$$comm.likes" }
+					}
+				}
+			}
+		})
+			.populate("comments.postedBy", "username -_id")
+			.lean();
+
+		video.comments = vidData.comments;
+	}
 
 	// increment the number of views on the video
 	VideoModel.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).catch(
