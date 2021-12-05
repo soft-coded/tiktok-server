@@ -133,7 +133,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 				}
 			}
 		})
-			.populate("comments.postedBy", "username -_id")
+			.populate("comments.postedBy", "username name -_id")
 			.lean();
 
 		video.comments = vidData.comments;
