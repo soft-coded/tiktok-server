@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, param, header } from "express-validator";
+import { body, param, header, query } from "express-validator";
 
 import {
 	createVideo,
@@ -33,30 +33,30 @@ router
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("caption")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Caption is required.")
+			.withMessage("Caption is required")
 			.isLength({ max: constants.captionMaxLen })
-			.withMessage("Caption too long."),
+			.withMessage("Caption too long"),
 		body("tags")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("At least 1 tag is required.")
+			.withMessage("At least 1 tag is required")
 			.isLength({ max: constants.tagsMaxLen })
-			.withMessage("Too many tags."),
+			.withMessage("Too many tags"),
 		body("music")
 			.optional()
 			.trim()
 			.isLength({ max: constants.musicMaxLen })
-			.withMessage("Music credit too long."),
+			.withMessage("Music credit too long"),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		createVideo
@@ -67,11 +67,11 @@ router
 	.get(
 		header("range")
 			.exists({ checkFalsy: true })
-			.withMessage("Range header required."),
+			.withMessage("Range header required"),
 		param("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("VideoId is required.")
+			.withMessage("VideoId is required")
 			.bail()
 			.custom(isValidVideo),
 		valRes,
@@ -84,13 +84,13 @@ router
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		valRes,
@@ -103,21 +103,23 @@ router
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		body("comment")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Comment cannot be empty.")
-			.isLength({ max: 400 })
-			.withMessage("Comment cannot be more than 400 characters."),
+			.withMessage("Comment cannot be empty")
+			.isLength({ max: constants.commentMaxLen })
+			.withMessage(
+				`Comment cannot have more than ${constants.commentMaxLen} characters.`
+			),
 		valRes,
 		comment
 	)
@@ -125,23 +127,23 @@ router
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		body("commentId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("CommentId cannot be empty.")
+			.withMessage("CommentId cannot be empty")
 			.bail()
 			.custom(isValidComment),
 		valRes,
@@ -155,19 +157,19 @@ router
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		body("commentId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("CommentId cannot be empty.")
+			.withMessage("CommentId cannot be empty")
 			.bail()
 			.custom(isValidComment),
 		valRes,
@@ -180,27 +182,27 @@ router
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		body("commentId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("CommentId cannot be empty.")
+			.withMessage("CommentId cannot be empty")
 			.bail()
 			.custom(isValidComment),
 		body("comment")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Reply cannot be empty.")
+			.withMessage("Reply cannot be empty")
 			.isLength({ max: 400 })
-			.withMessage("Reply cannot be more than 400 characters."),
+			.withMessage("Reply cannot be more than 400 characters"),
 		valRes,
 		reply
 	)
@@ -208,29 +210,29 @@ router
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Video does not exist.")
+			.withMessage("Video does not exist")
 			.bail()
 			.custom(isValidVideo),
 		body("commentId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("CommentId cannot be empty.")
+			.withMessage("CommentId cannot be empty")
 			.bail()
 			.custom(isValidComment),
 		body("replyId")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("ReplyId cannot be empty."),
+			.withMessage("ReplyId cannot be empty"),
 		valRes,
 		verifyToken,
 		deleteReply
@@ -243,9 +245,16 @@ router
 		param("id")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Invalid URL.")
+			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidVideo),
+		query("username")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Username cannot be empty")
+			.bail()
+			.custom(isValidUser),
 		valRes,
 		getVideo
 	)
@@ -253,38 +262,38 @@ router
 		param("id")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Invalid URL.")
+			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidVideo),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		body("caption")
 			.optional()
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Caption cannot be empty.")
+			.withMessage("Caption cannot be empty")
 			.isLength({ max: constants.captionMaxLen })
-			.withMessage("Caption too long."),
+			.withMessage("Caption too long"),
 		body("tags")
 			.optional()
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("At least 1 tag is required.")
+			.withMessage("At least 1 tag is required")
 			.isLength({ max: constants.tagsMaxLen })
-			.withMessage("Too many tags."),
+			.withMessage("Too many tags"),
 		body("music")
 			.optional()
 			.trim()
 			.isLength({ max: constants.musicMaxLen })
-			.withMessage("Music credit too long."),
+			.withMessage("Music credit too long"),
 		valRes,
 		verifyToken,
 		updateVideo
@@ -293,19 +302,19 @@ router
 		param("id")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Invalid URL.")
+			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidVideo),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		deleteVideo

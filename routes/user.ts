@@ -21,7 +21,7 @@ router
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		valRes,
@@ -32,13 +32,13 @@ router
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		updatePfp
@@ -47,13 +47,13 @@ router
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		deletePfp
@@ -65,23 +65,23 @@ router
 		body("oldPassword")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Old password is required."),
+			.withMessage("Old password is required"),
 		body("newPassword")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("New password cannot be empty.")
+			.withMessage("New password cannot be empty")
 			.isLength({ min: constants.passwordMinLen })
-			.withMessage("New password too short."),
+			.withMessage("New password too short"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue.")
+			.withMessage("Log in to continue")
 			.bail()
 			.custom(isValidUser),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		changePassword
@@ -93,7 +93,7 @@ router
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Invalid URL.")
+			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidUser),
 		valRes,
@@ -103,33 +103,33 @@ router
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Invalid URL.")
+			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidUser),
 		body("name")
 			.optional()
 			.trim()
 			.isLength({ min: 1 })
-			.withMessage("Name cannot be empty.")
+			.withMessage("Name cannot be empty")
 			.isLength({ max: constants.nameMaxLen })
-			.withMessage("Name too long."),
+			.withMessage("Name too long"),
 		body("email")
 			.optional()
 			.trim()
 			.isEmail()
-			.withMessage("Invalid email.")
+			.withMessage("Invalid email")
 			.normalizeEmail({ all_lowercase: true }),
 		body("description")
 			.optional()
 			.trim()
 			.isLength({ min: 1 })
-			.withMessage("Bio cannot be empty.")
+			.withMessage("Bio cannot be empty")
 			.isLength({ max: constants.descriptionMaxLen })
-			.withMessage("Bio too long."),
+			.withMessage("Bio too long"),
 		body("token")
 			.trim()
 			.exists({ checkFalsy: true })
-			.withMessage("Token is required."),
+			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		updateUser

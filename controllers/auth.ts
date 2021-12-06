@@ -12,7 +12,7 @@ export const login = asyncHandler(async (req, res) => {
 		"username password"
 	);
 	const passMatches = await compare(req.body.password, user.password);
-	if (!passMatches) throw new CustomError(400, "Incorrect password.");
+	if (!passMatches) throw new CustomError(400, "Incorrect password");
 
 	const token = sign(user.username, process.env.TOKEN_SECRET!);
 
@@ -21,10 +21,10 @@ export const login = asyncHandler(async (req, res) => {
 
 export const signup = asyncHandler(async (req, res) => {
 	let user: any = await UserModel.exists({ username: req.body.username });
-	if (user) throw new CustomError(400, "Username already registered.");
+	if (user) throw new CustomError(400, "Username already registered");
 
 	user = await UserModel.exists({ email: req.body.email });
-	if (user) throw new CustomError(400, "Email already registered.");
+	if (user) throw new CustomError(400, "Email already registered");
 
 	delete req.body.confpass; // password confirmation, not needed anymore
 	const hashedPassword = await hash(req.body.password, 10);

@@ -51,7 +51,7 @@ function fileFilter(
 		!allowedTypes.test(extname(file.originalname)) ||
 		!allowedTypes.test(file.mimetype)
 	) {
-		return cb(new Error("File type not allowed."));
+		return cb(new Error("File type not allowed"));
 	}
 	cb(null, true);
 }

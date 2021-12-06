@@ -44,7 +44,7 @@ A single video object will look like this:
 */
 
 export const createVideo = asyncHandler(async (req, res) => {
-	if (!req.file) throw new CustomError(500, "Video upload unsuccessful.");
+	if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
 
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
 
@@ -69,6 +69,7 @@ export const createVideo = asyncHandler(async (req, res) => {
 });
 
 type Query = {
+	username?: string;
 	uploader?: "1";
 	caption?: "1";
 	music?: "1";
@@ -87,6 +88,11 @@ async function getNum(field: string, videoId: string) {
 	}).lean();
 
 	return vidData.num;
+}
+
+async function hasLiked(videoId: string, username: string) {
+	const user = await UserModel.findOne({ username }, "_id");
+	return await VideoModel.exists({ _id: videoId, likes: user._id });
 }
 
 export const getVideo = asyncHandler(async (req, res) => {
@@ -139,6 +145,9 @@ export const getVideo = asyncHandler(async (req, res) => {
 		video.comments = vidData.comments;
 	}
 
+	if (query.username)
+		video.hasLiked = await hasLiked(video.videoId, query.username);
+
 	// increment the number of views on the video
 	VideoModel.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).catch(
 		err => console.error(err)
@@ -166,7 +175,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 		"uploader video likes"
 	);
 	if (!user._id.equals(video.uploader))
-		throw new CustomError(403, "You are not allowed to perform this action.");
+		throw new CustomError(403, "You are not allowed to perform this action");
 
 	// file deletion and removal doesn't need to be synchronous
 	removeFile(video.video, constants.videosFolder);
@@ -269,7 +278,7 @@ export const deleteComment = asyncHandler(async (req, res) => {
 	const comment = video.comments.id(req.body.commentId);
 
 	if (!comment.postedBy.equals(user._id))
-		throw new CustomError(403, "You are not allowed to perform this action.");
+		throw new CustomError(403, "You are not allowed to perform this action");
 
 	comment.remove();
 	await video.save();
@@ -368,9 +377,9 @@ export const deleteReply = asyncHandler(async (req, res) => {
 		.id(req.body.commentId)
 		.replies.id(req.body.replyId);
 
-	if (!reply) throw new CustomError(404, "Reply does not exist.");
+	if (!reply) throw new CustomError(404, "Reply does not exist");
 	if (!reply.postedBy.equals(user._id))
-		throw new CustomError(403, "You are not allowed to perform this action.");
+		throw new CustomError(403, "You are not allowed to perform this action");
 
 	reply.remove();
 	await video.save();

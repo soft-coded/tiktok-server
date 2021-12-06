@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json({ limit: "30mb" }));
 
 connect(process.env.DB_URL!)
-	.then(() => console.log("Connected to database."))
+	.then(() => console.log("Connected to database"))
 	.catch(err => {
 		console.log(err);
 		process.exit(-1);
@@ -25,10 +25,10 @@ app.use(router);
 
 // not found
 app.use("*", () => {
-	throw new CustomError(404, "Not found.");
+	throw new CustomError(404, "Not found");
 });
 
 // error handler
 app.use(handleError);
 
-app.listen(process.env.PORT || 5000, () => console.log("Server started."));
+app.listen(process.env.PORT || 5000, () => console.log("Server started"));

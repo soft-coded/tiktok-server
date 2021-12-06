@@ -8,6 +8,7 @@ export default {
 	captionMaxLen: 150,
 	tagsMaxLen: 200,
 	musicMaxLen: 30,
+	commentMaxLen: 300,
 	pfpFolder: "profile-photos",
 	videosFolder: "uploads"
 };

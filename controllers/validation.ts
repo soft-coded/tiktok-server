@@ -14,7 +14,7 @@ export const isValidUser: CustomValidator = async val => {
 		const exists = await UserModel.exists({ username: val });
 		if (!exists) throw "";
 	} catch {
-		throw new Error("User does not exist.");
+		throw new Error("User does not exist");
 	}
 };
 
@@ -23,7 +23,7 @@ export const isValidVideo: CustomValidator = async val => {
 		const exists = await VideoModel.exists({ _id: val });
 		if (!exists) throw "";
 	} catch {
-		throw new Error("Video does not exist.");
+		throw new Error("Video does not exist");
 	}
 };
 
@@ -33,7 +33,7 @@ export const isValidComment: CustomValidator = async (val, { req }) => {
 		const exists = video.comments.id(val);
 		if (!exists) throw "";
 	} catch {
-		throw new Error("Comment does not exist.");
+		throw new Error("Comment does not exist");
 	}
 };
 
@@ -72,6 +72,6 @@ export const verifyToken = asyncHandler(async (req, _, next) => {
 					? constants.videosFolder
 					: constants.pfpFolder
 			);
-		throw new CustomError(403, "You are not allowed to perform this action.");
+		throw new CustomError(403, "You are not allowed to perform this action");
 	}
 });

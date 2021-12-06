@@ -114,7 +114,7 @@ export const getPfp = asyncHandler(async (req, res) => {
 });
 
 export const updatePfp = asyncHandler(async (req, res) => {
-	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful.");
+	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful");
 
 	const user = await UserModel.findOne(
 		{ username: req.params.username },
@@ -139,7 +139,7 @@ export const deletePfp = asyncHandler(async (req, res) => {
 
 	if (user.profilePhoto !== "default.png")
 		removeFile(user.profilePhoto, constants.pfpFolder);
-	else throw new CustomError(404, "Profile photo does not exist.");
+	else throw new CustomError(404, "Profile photo does not exist");
 
 	user.profilePhoto = "default.png";
 	await user.save();
@@ -153,7 +153,7 @@ export const changePassword = asyncHandler(async (req, res) => {
 		"password"
 	);
 	const matches = await compare(req.body.oldPassword, user.password);
-	if (!matches) throw new CustomError(400, "Incorrect old password.");
+	if (!matches) throw new CustomError(400, "Incorrect old password");
 
 	const hashedPassword = await hash(req.body.newPassword, 10);
 	user.password = hashedPassword;
