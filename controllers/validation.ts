@@ -61,7 +61,7 @@ export const verifyToken = asyncHandler(async (req, _, next) => {
 		const DBUser = await UserModel.findOne({ username }, "username -_id");
 		const tokenUsername = verify(req.body.token, process.env.TOKEN_SECRET!);
 
-		if (DBUser.username !== tokenUsername) throw "";
+		if (DBUser!.username !== tokenUsername) throw "";
 
 		next();
 	} catch {

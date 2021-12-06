@@ -90,7 +90,7 @@ async function getNum(field: string, videoId: string) {
 	return vidData.num;
 }
 
-async function hasLiked(videoId: string, username: string) {
+export async function hasLiked(videoId: string, username: string) {
 	const user = await UserModel.findOne({ username }, "_id");
 	return await VideoModel.exists({ _id: videoId, likes: user._id });
 }

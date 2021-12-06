@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { compare, hash } from "bcryptjs";
 
-import UserModel from "../models/user";
+import UserModel, { ExtendedUser } from "../models/user";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
 import { removeFile, getRelativePath } from "../utils/fileHander";
@@ -19,7 +19,7 @@ type Query = {
 };
 
 async function getNum(field: string, username: string) {
-	const userData = await UserModel.findOne(
+	const userData: ExtendedUser = await UserModel.findOne(
 		{ username },
 		{
 			num: { $size: "$" + field },
@@ -41,58 +41,50 @@ export const getUser = asyncHandler(async (req, res) => {
 	if (query.totalLikes !== "1") projection += " -totalLikes";
 	if (query.createdAt !== "1") projection += " -createdAt";
 
-	const user = await UserModel.findOne(
+	const user: ExtendedUser = (await UserModel.findOne(
 		{ username: req.params.username },
 		projection
-	).lean();
+	).lean())!;
 
 	if (query.followers === "num")
 		user.followers = await getNum("followers", req.params.username);
 	else if (query.followers === "list")
-		user.followers = (
-			await UserModel.findOne(
-				{ username: req.params.username },
-				"followers -_id"
-			)
-				.populate("followers", "username -_id")
-				.lean()
-		).followers;
+		user.followers = (await UserModel.findOne(
+			{ username: req.params.username },
+			"followers -_id"
+		)
+			.populate("followers", "username -_id")
+			.lean())!.followers;
 
 	if (query.following === "num")
 		user.following = await getNum("following", req.params.username);
 	else if (query.following === "list")
-		user.following = (
-			await UserModel.findOne(
-				{ username: req.params.username },
-				"following -_id"
-			)
-				.populate("following", "username -_id")
-				.lean()
-		).following;
+		user.following = (await UserModel.findOne(
+			{ username: req.params.username },
+			"following -_id"
+		)
+			.populate("following", "username -_id")
+			.lean())!.following;
 
 	if (query.videos === "uploaded")
-		user.videos = (
-			await UserModel.findOne(
-				{ username: req.params.username },
-				{ videos: { $reverseArray: "$videos.uploaded" }, _id: 0 }
-			).lean()
-		).videos;
+		user.videos = (await UserModel.findOne(
+			{ username: req.params.username },
+			{ videos: { $reverseArray: "$videos.uploaded" }, _id: 0 }
+		).lean())!.videos;
 	else if (query.videos === "liked")
-		user.videos = (
-			await UserModel.findOne(
-				{ username: req.params.username },
-				{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
-			).lean()
-		).videos;
+		user.videos = (await UserModel.findOne(
+			{ username: req.params.username },
+			{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
+		).lean())!.videos;
 
 	res.status(200).json(successRes(user));
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne(
+	const user = (await UserModel.findOne(
 		{ username: req.params.username },
 		"name email description username"
-	);
+	))!;
 	const { name, email, description } = req.body;
 
 	if (name) user.name = name;
@@ -110,16 +102,16 @@ export const getPfp = asyncHandler(async (req, res) => {
 		"profilePhoto -_id"
 	);
 
-	res.sendFile(getRelativePath(constants.pfpFolder, user.profilePhoto));
+	res.sendFile(getRelativePath(constants.pfpFolder, user!.profilePhoto));
 });
 
 export const updatePfp = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful");
 
-	const user = await UserModel.findOne(
+	const user = (await UserModel.findOne(
 		{ username: req.params.username },
 		"profilePhoto"
-	);
+	))!;
 	// remove the old pfp if it's not the default one
 	// !!! do not remove the default photo !!!
 	if (user.profilePhoto !== "default.png")
@@ -132,10 +124,10 @@ export const updatePfp = asyncHandler(async (req, res) => {
 });
 
 export const deletePfp = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne(
+	const user = (await UserModel.findOne(
 		{ username: req.params.username },
 		"profilePhoto"
-	);
+	))!;
 
 	if (user.profilePhoto !== "default.png")
 		removeFile(user.profilePhoto, constants.pfpFolder);
@@ -148,10 +140,10 @@ export const deletePfp = asyncHandler(async (req, res) => {
 });
 
 export const changePassword = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne(
+	const user = (await UserModel.findOne(
 		{ username: req.body.username },
 		"password"
-	);
+	))!;
 	const matches = await compare(req.body.oldPassword, user.password);
 	if (!matches) throw new CustomError(400, "Incorrect old password");
 

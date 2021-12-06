@@ -1,21 +1,30 @@
 import { Schema, model, SchemaTypes } from "mongoose";
 
-export interface UserType {
-	userId?: string;
-	id?: string;
+import { Video } from "./video";
+
+export interface User {
+	_id: string;
 	username: string;
-	name?: string;
-	email?: string;
-	password?: string;
-	profilePhoto?: string;
-	description?: string;
-	videos?: {
-		uploaded?: string[];
-		liked?: string[];
+	name: string;
+	email: string;
+	password: string;
+	profilePhoto: string;
+	description: string;
+	videos: {
+		uploaded: Video[];
+		liked: Video[];
 	};
-	totalLikes?: number;
-	following?: string[];
-	followers?: string[];
+	totalLikes: number;
+	following: User[];
+	followers: User[];
+	interestedIn: string[];
+	createdAt: Date | number;
+}
+
+export interface ExtendedUser extends Omit<User, "followers" | "following"> {
+	num?: number;
+	followers?: number | User[];
+	following?: number | User[];
 }
 
 export const RefType = (ref: string) => ({
@@ -23,7 +32,7 @@ export const RefType = (ref: string) => ({
 	ref
 });
 
-export default model(
+export default model<User>(
 	"User",
 	new Schema({
 		username: {
