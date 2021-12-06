@@ -34,7 +34,7 @@ export const RefType = (ref: string) => ({
 
 export default model<User>(
 	"User",
-	new Schema({
+	new Schema<User>({
 		username: {
 			type: String,
 			required: true,

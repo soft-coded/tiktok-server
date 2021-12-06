@@ -41,10 +41,10 @@ export const getUser = asyncHandler(async (req, res) => {
 	if (query.totalLikes !== "1") projection += " -totalLikes";
 	if (query.createdAt !== "1") projection += " -createdAt";
 
-	const user: ExtendedUser = (await UserModel.findOne(
+	const user: ExtendedUser = await UserModel.findOne(
 		{ username: req.params.username },
 		projection
-	).lean())!;
+	).lean();
 
 	if (query.followers === "num")
 		user.followers = await getNum("followers", req.params.username);

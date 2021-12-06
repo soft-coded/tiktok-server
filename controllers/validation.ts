@@ -5,7 +5,7 @@ import asyncHandler from "express-async-handler";
 
 import { CustomError } from "../utils/error";
 import { removeFile } from "../utils/fileHander";
-import VideoModel from "../models/video";
+import VideoModel, { ExtendedVideo } from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
 
@@ -29,8 +29,11 @@ export const isValidVideo: CustomValidator = async val => {
 
 export const isValidComment: CustomValidator = async (val, { req }) => {
 	try {
-		const video = await VideoModel.findById(req.body.videoId, "comments._id");
-		const exists = video.comments.id(val);
+		const video: ExtendedVideo = (await VideoModel.findById(
+			req.body.videoId,
+			"comments._id"
+		))!;
+		const exists = video.comments!.id(val);
 		if (!exists) throw "";
 	} catch {
 		throw new Error("Comment does not exist");

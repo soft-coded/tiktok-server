@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, SchemaType } from "mongoose";
 
 import { RefType, User } from "./user";
 
@@ -26,9 +26,15 @@ export interface Video {
 	createdAt: Date | number;
 }
 
-export interface ExtendedVideo extends Video {
+export interface ExtendedVideo
+	extends Omit<Video, "comments" | "_id" | "likes"> {
+	_id?: string;
+	num?: number;
 	videoId?: string;
 	hasLiked?: boolean;
+	comments?: any;
+	likes?: number | User[];
+	save?: any;
 }
 
 const reply = {
@@ -48,16 +54,16 @@ const reply = {
 	likes: [RefType("User")]
 };
 
-const ReplySchema = new Schema(reply);
+const ReplySchema = new Schema<Comment>(reply);
 
-const CommentSchema = new Schema({
+const CommentSchema = new Schema<Comment>({
 	...reply,
 	replies: [ReplySchema] // replies cannot be nested
 });
 
 export default model<Video>(
 	"Video",
-	new Schema({
+	new Schema<Video>({
 		uploader: {
 			...RefType("User"),
 			required: true

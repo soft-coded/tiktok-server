@@ -4,7 +4,7 @@ import { statSync, createReadStream } from "fs";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
 import { removeFile, getRelativePath } from "../utils/fileHander";
-import VideoModel from "../models/video";
+import VideoModel, { ExtendedVideo } from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
 
@@ -46,7 +46,10 @@ A single video object will look like this:
 export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
 
-	const user = await UserModel.findOne({ username: req.body.username }, "_id");
+	const user = (await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	))!;
 
 	let { caption, music, tags } = req.body;
 	if (!music) music = req.body.username + " - Original audio";
@@ -82,7 +85,7 @@ type Query = {
 };
 
 async function getNum(field: string, videoId: string) {
-	const vidData = await VideoModel.findById(videoId, {
+	const vidData: ExtendedVideo = await VideoModel.findById(videoId, {
 		num: { $size: "$" + field },
 		_id: 0
 	}).lean();
@@ -92,7 +95,7 @@ async function getNum(field: string, videoId: string) {
 
 export async function hasLiked(videoId: string, username: string) {
 	const user = await UserModel.findOne({ username }, "_id");
-	return await VideoModel.exists({ _id: videoId, likes: user._id });
+	return await VideoModel.exists({ _id: videoId, likes: user!._id });
 }
 
 export const getVideo = asyncHandler(async (req, res) => {
@@ -106,7 +109,10 @@ export const getVideo = asyncHandler(async (req, res) => {
 	if (query.tags !== "1") projection += " -tags";
 	if (query.createdAt !== "1") projection += " -createdAt";
 
-	const video = await VideoModel.findById(req.params.id, projection).lean();
+	const video: ExtendedVideo = await VideoModel.findById(
+		req.params.id,
+		projection
+	).lean();
 	video.videoId = video._id;
 	delete video._id;
 
@@ -115,7 +121,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 			.populate("uploader", "username name -_id")
 			.lean();
 
-		video.uploader = vidData.uploader;
+		video.uploader = vidData!.uploader;
 	}
 
 	if (query.likes === "1") video.likes = await getNum("likes", req.params.id);
@@ -142,11 +148,11 @@ export const getVideo = asyncHandler(async (req, res) => {
 			.populate("comments.postedBy", "username name -_id")
 			.lean();
 
-		video.comments = vidData.comments;
+		video.comments = vidData!.comments;
 	}
 
 	if (query.username)
-		video.hasLiked = await hasLiked(video.videoId, query.username);
+		video.hasLiked = await hasLiked(video.videoId!, query.username);
 
 	// increment the number of views on the video
 	VideoModel.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).catch(
@@ -157,7 +163,10 @@ export const getVideo = asyncHandler(async (req, res) => {
 });
 
 export const updateVideo = asyncHandler(async (req, res) => {
-	const video = await VideoModel.findById(req.params.id, "caption music tags");
+	const video = (await VideoModel.findById(
+		req.params.id,
+		"caption music tags"
+	))!;
 
 	const { caption, music, tags } = req.body;
 	if (caption) video.caption = caption;
@@ -169,11 +178,14 @@ export const updateVideo = asyncHandler(async (req, res) => {
 });
 
 export const deleteVideo = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne({ username: req.body.username }, "_id");
-	const video = await VideoModel.findById(
+	const user = (await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	))!;
+	const video = (await VideoModel.findById(
 		req.params.id,
 		"uploader video likes"
-	);
+	))!;
 	if (!user._id.equals(video.uploader))
 		throw new CustomError(403, "You are not allowed to perform this action");
 
@@ -195,13 +207,13 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 });
 
 export const likeOrUnlike = asyncHandler(async (req, res) => {
-	const liker = await UserModel.findOne(
+	const liker = (await UserModel.findOne(
 		{ username: req.body.username },
 		"_id"
-	).lean();
+	).lean())!;
 
 	let video = await VideoModel.findOne(
-		{ _id: req.body.videoId, likes: liker._id },
+		{ _id: req.body.videoId, likes: liker._id as any },
 		"likes uploader"
 	).lean();
 
@@ -231,7 +243,7 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 			.exec()
 			.catch(err => console.error(err.message));
 	} else {
-		video = await VideoModel.findById(req.body.videoId, "uploader");
+		video = (await VideoModel.findById(req.body.videoId, "uploader"))!;
 
 		VideoModel.findByIdAndUpdate(video._id, {
 			$push: { likes: liker._id }
@@ -256,8 +268,14 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 });
 
 export const comment = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne({ username: req.body.username }, "_id");
-	const video = await VideoModel.findById(req.body.videoId, "comments._id");
+	const user = (await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	))!;
+	const video: ExtendedVideo = (await VideoModel.findById(
+		req.body.videoId,
+		"comments._id"
+	))!;
 
 	const comment = video.comments.create({
 		postedBy: user._id,
@@ -271,13 +289,13 @@ export const comment = asyncHandler(async (req, res) => {
 
 export const deleteComment = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
-	const video = await VideoModel.findById(
+	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
 		"comments._id comments.postedBy"
-	);
+	))!;
 	const comment = video.comments.id(req.body.commentId);
 
-	if (!comment.postedBy.equals(user._id))
+	if (!comment.postedBy.equals(user!._id))
 		throw new CustomError(403, "You are not allowed to perform this action");
 
 	comment.remove();
@@ -287,18 +305,18 @@ export const deleteComment = asyncHandler(async (req, res) => {
 });
 
 export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne(
+	const user = (await UserModel.findOne(
 		{ username: req.body.username },
 		"_id"
-	).lean();
+	).lean())!;
 
-	let video = await VideoModel.findOne(
+	let video = (await VideoModel.findOne(
 		{
 			_id: req.body.videoId,
 			comments: { $elemMatch: { _id: req.body.commentId, likes: user._id } }
 		},
 		"comments._id comments.likes comments.postedBy"
-	);
+	))!;
 
 	let liked = true; // if the comment was liked or unliked
 
@@ -320,13 +338,13 @@ export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
 			.exec()
 			.catch(err => console.error(err.message));
 	} else {
-		video = await VideoModel.findOne(
+		video = (await VideoModel.findOne(
 			{
 				_id: req.body.videoId,
 				"comments._id": req.body.commentId
 			},
 			"comments.$"
-		);
+		))!;
 
 		// like the comment
 		VideoModel.findByIdAndUpdate(
@@ -349,11 +367,14 @@ export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
 });
 
 export const reply = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne({ username: req.body.username }, "_id");
-	const video = await VideoModel.findById(
+	const user = (await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	))!;
+	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
 		"comments.replies comments._id"
-	);
+	))!;
 	const replies = video.comments.id(req.body.commentId).replies;
 
 	const reply = replies.create({
@@ -368,17 +389,17 @@ export const reply = asyncHandler(async (req, res) => {
 
 export const deleteReply = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
-	const video = await VideoModel.findById(
+	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
 		"comments.replies._id comments.replies.postedBy comments._id"
-	);
+	))!;
 
 	const reply = video.comments
 		.id(req.body.commentId)
 		.replies.id(req.body.replyId);
 
 	if (!reply) throw new CustomError(404, "Reply does not exist");
-	if (!reply.postedBy.equals(user._id))
+	if (!reply.postedBy.equals(user!._id))
 		throw new CustomError(403, "You are not allowed to perform this action");
 
 	reply.remove();
@@ -389,10 +410,10 @@ export const deleteReply = asyncHandler(async (req, res) => {
 
 const chunkSize = 1048576; // 1MB
 export const streamVideo = asyncHandler(async (req, res) => {
-	const video = await VideoModel.findById(
+	const video = (await VideoModel.findById(
 		req.params.videoId,
 		"video -_id"
-	).lean();
+	).lean())!;
 	const path = getRelativePath(constants.videosFolder, video.video);
 	const range = req.headers.range!;
 
