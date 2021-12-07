@@ -13,7 +13,7 @@ function incrementViews(videoId: string) {
 }
 
 export const getFeed = asyncHandler(async (req, res) => {
-	const videos: ExtendedVideo[] = (await VideoModel.find(
+	const videos: ExtendedVideo[] = await VideoModel.find(
 		{},
 		{
 			videoId: "$_id",
@@ -31,10 +31,10 @@ export const getFeed = asyncHandler(async (req, res) => {
 		{
 			limit: feedLimit,
 			lean: true,
-			sort: "-views createdAt",
+			sort: "-views -likes createdAt",
 			populate: { path: "uploader", select: "username name -_id" }
 		}
-	))!;
+	);
 
 	// forEach loop won't work here because "async"
 	if (req.query.username) {
