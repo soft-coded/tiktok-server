@@ -98,6 +98,19 @@ export async function hasLiked(videoId: string, username: string) {
 	return await VideoModel.exists({ _id: videoId, likes: user!._id });
 }
 
+export async function hasLikedComment(
+	videoId: string,
+	commentId: string,
+	username: string
+) {
+	const user = await UserModel.findOne({ username }, "_id").lean();
+
+	return await VideoModel.exists({
+		_id: videoId,
+		comments: { $elemMatch: { _id: commentId, likes: user!._id } }
+	});
+}
+
 export const getVideo = asyncHandler(async (req, res) => {
 	const query: Query = req.query;
 	let projection = "-__v -uploader -likes -comments -video";
@@ -129,7 +142,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 	if (query.comments === "num")
 		video.comments = await getNum("comments", req.params.id);
 	else if (query.comments === "list") {
-		const vidData = await VideoModel.findById(req.params.id, {
+		const vidData = (await VideoModel.findById(req.params.id, {
 			_id: 0,
 			comments: {
 				$map: {
@@ -146,9 +159,18 @@ export const getVideo = asyncHandler(async (req, res) => {
 			}
 		})
 			.populate("comments.postedBy", "username name -_id")
-			.lean();
-
-		video.comments = vidData!.comments;
+			.lean())!;
+		// whether the user liked the comment or not
+		if (query.username) {
+			for (let comm of vidData.comments) {
+				comm.hasLiked = await hasLikedComment(
+					video.videoId!,
+					comm.commentId!,
+					query.username
+				);
+			}
+		}
+		video.comments = vidData.comments;
 	}
 
 	if (query.username)

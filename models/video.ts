@@ -10,6 +10,7 @@ interface Comment {
 	createdAt: Date | number;
 	likes: User[];
 	replies?: Comment[];
+	hasLiked?: boolean;
 }
 
 export interface Video {
