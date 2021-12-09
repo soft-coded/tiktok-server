@@ -201,8 +201,10 @@ router
 			.trim()
 			.exists({ checkFalsy: true })
 			.withMessage("Reply cannot be empty")
-			.isLength({ max: 400 })
-			.withMessage("Reply cannot be more than 400 characters"),
+			.isLength({ max: constants.commentMaxLen })
+			.withMessage(
+				`Reply cannot be more than ${constants.commentMaxLen} characters`
+			),
 		valRes,
 		reply
 	)

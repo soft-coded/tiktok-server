@@ -153,7 +153,8 @@ export const getVideo = asyncHandler(async (req, res) => {
 						postedBy: "$$comm.postedBy",
 						comment: "$$comm.comment",
 						createdAt: "$$comm.createdAt",
-						likes: { $size: "$$comm.likes" }
+						likes: { $size: "$$comm.likes" },
+						replies: { $size: "$$comm.replies" }
 					}
 				}
 			}
