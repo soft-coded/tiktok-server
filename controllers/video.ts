@@ -43,6 +43,12 @@ A single video object will look like this:
 }
 */
 
+type CreateVidQuery = {
+	caption: string;
+	music?: string;
+	tags: string;
+};
+
 export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
 
@@ -51,24 +57,29 @@ export const createVideo = asyncHandler(async (req, res) => {
 		"_id"
 	))!;
 
-	let { caption, music, tags } = req.body;
-	if (!music) music = req.body.username + " - Original audio";
-	tags = tags.split(" ");
+	let { caption, music, tags }: CreateVidQuery = req.body;
+	if (!music) music = req.body.username + " - original audio";
+	// split the "tags" string into array, remove all the hashtags from the beginning of each string, and then remove all the empty strings
+	const tagsArr = tags
+		.split(" ")
+		.map(tag => tag.replace(/#/g, "").trim())
+		.filter(tag => tag);
+
+	console.log(tagsArr);
 
 	const video = await VideoModel.create({
 		uploader: user._id,
 		video: req.file.filename,
 		caption: caption,
 		music: music,
-		tags: tags
+		tags: tagsArr
 	});
 
+	res.status(201).json(successRes({ videoId: video._id }));
 	// add video to user's uploaded array and update the interestedIn array
 	UserModel.findByIdAndUpdate(user._id, {
-		$push: { "videos.uploaded": video._id, interestedIn: { $each: tags } }
+		$push: { "videos.uploaded": video._id, interestedIn: { $each: tagsArr } }
 	}).exec(); // !! exec() is important !!
-
-	res.status(201).json(successRes({ videoId: video._id }));
 });
 
 type Query = {
@@ -94,8 +105,8 @@ async function getNum(field: string, videoId: string) {
 }
 
 export async function hasLiked(videoId: string, username: string) {
-	const user = await UserModel.findOne({ username }, "_id");
-	return await VideoModel.exists({ _id: videoId, likes: user!._id });
+	const user = await UserModel.findOne({ username }, "_id").lean();
+	return await VideoModel.exists({ _id: videoId, likes: user!._id as any });
 }
 
 export async function hasLikedComment(
@@ -143,7 +154,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 		video.comments = (await VideoModel.findById(
 			req.params.id,
 			"totalComments -_id"
-		))!.totalComments;
+		).lean())!.totalComments;
 	else if (query.comments === "list") {
 		const vidData = (await VideoModel.findById(req.params.id, {
 			_id: 0,
