@@ -29,6 +29,7 @@ export const isValidVideo: CustomValidator = async val => {
 
 export const isValidComment: CustomValidator = async (val, { req }) => {
 	try {
+		// keep query.videoId before body.videoId, doesn't work the other way round
 		const videoId = req.query!.videoId ? req.query!.videoId : req.body.videoId;
 		const exists = await VideoModel.exists({
 			_id: videoId,
