@@ -59,7 +59,7 @@ export const createVideo = asyncHandler(async (req, res) => {
 
 	let { caption, music, tags }: CreateVidQuery = req.body;
 	if (!music) music = req.body.username + " - original audio";
-	// split the "tags" string into array, remove all the hashtags from the beginning of each string, and then remove all the empty strings
+	// split the "tags" string into array, remove all the hashtags from each string and then remove all the empty strings
 	const tagsArr = tags
 		.split(" ")
 		.map(tag => tag.replace(/#/g, "").trim())
