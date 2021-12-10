@@ -14,7 +14,7 @@ interface Reply {
 
 interface Comment extends Omit<Reply, "replyId"> {
 	commentId?: string;
-	replies?: Reply[];
+	replies: Reply[];
 	hasLiked?: boolean;
 }
 

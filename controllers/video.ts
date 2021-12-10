@@ -440,7 +440,7 @@ export const getReplies = asyncHandler(async (req, res) => {
 		"comments.$"
 	)
 		.populate("comments.replies.postedBy", "username name -_id")
-		.lean())!.comments[0].replies!;
+		.lean())!.comments[0].replies;
 
 	replies.forEach(reply => {
 		reply.replyId = reply._id;
