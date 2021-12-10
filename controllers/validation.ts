@@ -29,11 +29,11 @@ export const isValidVideo: CustomValidator = async val => {
 
 export const isValidComment: CustomValidator = async (val, { req }) => {
 	try {
-		const video: ExtendedVideo = (await VideoModel.findById(
-			req.body.videoId,
-			"comments._id"
-		))!;
-		const exists = video.comments!.id(val);
+		const videoId = req.query!.videoId ? req.query!.videoId : req.body.videoId;
+		const exists = await VideoModel.exists({
+			_id: videoId,
+			"comments._id": val
+		});
 		if (!exists) throw "";
 	} catch {
 		throw new Error("Comment does not exist");

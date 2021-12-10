@@ -2,14 +2,19 @@ import { Schema, model, SchemaType } from "mongoose";
 
 import { RefType, User } from "./user";
 
-interface Comment {
-	_id: string;
-	commentId?: string;
-	postedBy: User;
+interface Reply {
+	_id?: string;
+	replyId?: string;
 	comment: string;
+	postedBy: User;
 	createdAt: Date | number;
-	likes: User[];
-	replies?: Comment[];
+	likes: User[] | number;
+	hasLiked?: boolean;
+}
+
+interface Comment extends Omit<Reply, "replyId"> {
+	commentId?: string;
+	replies?: Reply[];
 	hasLiked?: boolean;
 }
 

@@ -431,6 +431,26 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes());
 });
 
+export const getReplies = asyncHandler(async (req, res) => {
+	const replies = (await VideoModel.findOne(
+		{
+			_id: req.query.videoId as string,
+			"comments._id": req.query.commentId as string
+		},
+		"comments.$"
+	)
+		.populate("comments.replies.postedBy", "username name -_id")
+		.lean())!.comments[0].replies!;
+
+	replies.forEach(reply => {
+		reply.replyId = reply._id;
+		delete reply._id;
+		reply.likes = (reply.likes as any[]).length;
+	});
+
+	res.status(200).json(successRes({ replies }));
+});
+
 const chunkSize = 1048576; // 1MB
 export const streamVideo = asyncHandler(async (req, res) => {
 	const video = (await VideoModel.findById(

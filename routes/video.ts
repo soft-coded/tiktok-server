@@ -12,6 +12,7 @@ import {
 	likeOrUnlikeComment,
 	reply,
 	deleteReply,
+	getReplies,
 	streamVideo
 } from "../controllers/video";
 import { uploadVideo } from "../utils/multer";
@@ -238,6 +239,25 @@ router
 		valRes,
 		verifyToken,
 		deleteReply
+	);
+
+router
+	.route("/getReplies")
+	.get(
+		query("videoId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Invalid URL")
+			.bail()
+			.custom(isValidVideo),
+		query("commentId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Invalid URL")
+			.bail()
+			.custom(isValidComment),
+		valRes,
+		getReplies
 	);
 
 // route to a single video, keep below everything else
