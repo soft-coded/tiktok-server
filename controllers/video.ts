@@ -65,8 +65,6 @@ export const createVideo = asyncHandler(async (req, res) => {
 		.map(tag => tag.replace(/#/g, "").trim())
 		.filter(tag => tag);
 
-	console.log(tagsArr);
-
 	const video = await VideoModel.create({
 		uploader: user._id,
 		video: req.file.filename,
