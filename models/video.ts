@@ -26,6 +26,7 @@ export interface Video {
 	caption: string;
 	tags: string[];
 	likes: User[];
+	totalComments: number;
 	comments: Comment[];
 	shares: number;
 	views: number;
@@ -88,6 +89,10 @@ export default model<Video>(
 			required: true
 		},
 		likes: [RefType("User")],
+		totalComments: {
+			type: Number,
+			default: 0
+		},
 		comments: [CommentSchema],
 		shares: {
 			type: Number,

@@ -113,7 +113,7 @@ export async function hasLikedComment(
 
 export const getVideo = asyncHandler(async (req, res) => {
 	const query: Query = req.query;
-	let projection = "-__v -uploader -likes -comments -video";
+	let projection = "-__v -uploader -likes -comments -video -totalComments";
 
 	if (query.caption !== "1") projection += " -caption";
 	if (query.music !== "1") projection += " -music";
@@ -140,7 +140,10 @@ export const getVideo = asyncHandler(async (req, res) => {
 	if (query.likes === "1") video.likes = await getNum("likes", req.params.id);
 
 	if (query.comments === "num")
-		video.comments = await getNum("comments", req.params.id);
+		video.comments = (await VideoModel.findById(
+			req.params.id,
+			"totalComments -_id"
+		))!.totalComments;
 	else if (query.comments === "list") {
 		const vidData = (await VideoModel.findById(req.params.id, {
 			_id: 0,
@@ -308,6 +311,12 @@ export const comment = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(201).json(successRes({ commentId: comment._id }));
+	// increment the total comments on the video
+	VideoModel.findByIdAndUpdate(req.body.videoId, {
+		$inc: { totalComments: 1 }
+	})
+		.exec()
+		.catch(err => console.error(err));
 });
 
 export const deleteComment = asyncHandler(async (req, res) => {
@@ -325,6 +334,12 @@ export const deleteComment = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(200).json(successRes());
+	// decrement the total comments on the video
+	VideoModel.findByIdAndUpdate(req.body.videoId, {
+		$inc: { totalComments: -1 }
+	})
+		.exec()
+		.catch(err => console.error(err));
 });
 
 export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
@@ -408,6 +423,12 @@ export const reply = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(201).json(successRes({ replyId: reply._id }));
+	// increment the total comments on the video
+	VideoModel.findByIdAndUpdate(req.body.videoId, {
+		$inc: { totalComments: 1 }
+	})
+		.exec()
+		.catch(err => console.error(err));
 });
 
 export const deleteReply = asyncHandler(async (req, res) => {
@@ -429,6 +450,12 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	await video.save();
 
 	res.status(200).json(successRes());
+	// decrement the total comments on the video
+	VideoModel.findByIdAndUpdate(req.body.videoId, {
+		$inc: { totalComments: -1 }
+	})
+		.exec()
+		.catch(err => console.error(err));
 });
 
 export const getReplies = asyncHandler(async (req, res) => {

@@ -23,7 +23,7 @@ export const getFeed = asyncHandler(async (req, res) => {
 			caption: 1,
 			tags: 1,
 			likes: { $size: "$likes" },
-			comments: { $size: "$comments" },
+			comments: "$totalComments",
 			shares: 1,
 			views: 1,
 			createdAt: 1
@@ -36,7 +36,7 @@ export const getFeed = asyncHandler(async (req, res) => {
 		}
 	);
 
-	// forEach loop won't work here because "async"
+	// forEach loop won't work here because "await"
 	if (req.query.username) {
 		for (let video of videos) {
 			video.hasLiked = await hasLiked(
