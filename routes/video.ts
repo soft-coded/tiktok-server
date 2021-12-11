@@ -13,7 +13,8 @@ import {
 	reply,
 	deleteReply,
 	getReplies,
-	streamVideo
+	streamVideo,
+	likeOrUnlikeReply
 } from "../controllers/video";
 import { uploadVideo } from "../utils/multer";
 import {
@@ -239,6 +240,31 @@ router
 		valRes,
 		verifyToken,
 		deleteReply
+	);
+
+router
+	.route("/likeReply")
+	.post(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Log in to continue")
+			.bail()
+			.custom(isValidUser),
+		body("videoId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Video does not exist")
+			.bail()
+			.custom(isValidVideo),
+		body("commentId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("CommentId cannot be empty")
+			.bail()
+			.custom(isValidComment),
+		valRes,
+		likeOrUnlikeReply
 	);
 
 router

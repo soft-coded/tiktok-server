@@ -61,7 +61,7 @@ const reply = {
 	likes: [RefType("User")]
 };
 
-const ReplySchema = new Schema<Comment>(reply);
+const ReplySchema = new Schema<Reply>(reply);
 
 const CommentSchema = new Schema<Comment>({
 	...reply,

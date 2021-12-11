@@ -55,7 +55,7 @@ export const createVideo = asyncHandler(async (req, res) => {
 	const user = (await UserModel.findOne(
 		{ username: req.body.username },
 		"_id"
-	))!;
+	).lean())!;
 
 	let { caption, music, tags }: CreateVidQuery = req.body;
 	if (!music) music = req.body.username + " - original audio";
@@ -68,8 +68,8 @@ export const createVideo = asyncHandler(async (req, res) => {
 	const video = await VideoModel.create({
 		uploader: user._id,
 		video: req.file.filename,
-		caption: caption,
-		music: music,
+		caption,
+		music,
 		tags: tagsArr
 	});
 
@@ -77,7 +77,9 @@ export const createVideo = asyncHandler(async (req, res) => {
 	// add video to user's uploaded array and update the interestedIn array
 	UserModel.findByIdAndUpdate(user._id, {
 		$push: { "videos.uploaded": video._id, interestedIn: { $each: tagsArr } }
-	}).exec(); // !! exec() is important !!
+	})
+		.exec() // !! exec() is important !!
+		.catch(err => console.error(err));
 });
 
 type Query = {
@@ -441,7 +443,10 @@ export const reply = asyncHandler(async (req, res) => {
 });
 
 export const deleteReply = asyncHandler(async (req, res) => {
-	const user = await UserModel.findOne({ username: req.body.username }, "_id");
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	).lean();
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
 		"comments.replies._id comments.replies.postedBy comments._id"
@@ -465,6 +470,73 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	})
 		.exec()
 		.catch(err => console.error(err));
+});
+
+export const likeOrUnlikeReply = asyncHandler(async (req, res) => {
+	const exists = await VideoModel.exists({
+		_id: req.body.videoId,
+		comments: {
+			$elemMatch: { _id: req.body.commentId, "replies._id": req.body.replyId }
+		}
+	});
+	if (!exists) throw new CustomError(400, "Reply does not exist");
+
+	let liked = true; // whether the reply was liked or unliked
+	const user = (await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	).lean())!;
+
+	let video = await VideoModel.findOne(
+		{
+			_id: req.body.videoId,
+			comments: {
+				$elemMatch: {
+					_id: req.body.commentId,
+					"replies._id": req.body.replyId,
+					"replies.likes": user._id
+				}
+			}
+		},
+		"comments.replies.$"
+	);
+
+	if (video) {
+		liked = false;
+
+		const reply: any = video.comments[0].replies[0];
+		reply.likes.splice(reply.likes.indexOf(user._id), 1);
+		video.save();
+
+		// decrement the total likes of the reply poster
+		UserModel.findByIdAndUpdate(reply.postedBy, { $inc: { totalLikes: -1 } })
+			.exec()
+			.catch(err => console.error(err));
+	} else {
+		video = (await VideoModel.findOne(
+			{
+				_id: req.body.videoId,
+				comments: {
+					$elemMatch: {
+						_id: req.body.commentId,
+						"replies._id": req.body.replyId
+					}
+				}
+			},
+			"comments.replies.$"
+		))!;
+
+		const reply: any = video.comments[0].replies[0];
+		reply.likes.push(user._id);
+		video.save();
+
+		// increment the total likes of the reply poster
+		UserModel.findByIdAndUpdate(reply.postedBy, { $inc: { totalLikes: 1 } })
+			.exec()
+			.catch(err => console.error(err));
+	}
+
+	res.status(200).json(successRes({ liked }));
 });
 
 export const getReplies = asyncHandler(async (req, res) => {
