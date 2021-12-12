@@ -333,20 +333,20 @@ export const deleteComment = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments._id comments.postedBy"
+		"comments._id comments.postedBy comments.replies"
 	))!;
 	const comment = video.comments.id(req.body.commentId);
-
 	if (!comment.postedBy.equals(user!._id))
 		throw new CustomError(403, "You are not allowed to perform this action");
 
+	const repliesNum = comment.replies.length;
 	comment.remove();
 	await video.save();
 
 	res.status(200).json(successRes());
 	// decrement the total comments on the video
 	VideoModel.findByIdAndUpdate(req.body.videoId, {
-		$inc: { totalComments: -1 }
+		$inc: { totalComments: -repliesNum - 1 }
 	})
 		.exec()
 		.catch(err => console.error(err));
