@@ -487,26 +487,41 @@ export const likeOrUnlikeReply = asyncHandler(async (req, res) => {
 		"_id"
 	).lean())!;
 
-	let video = await VideoModel.findOne(
+	let video: any = await VideoModel.findOne(
 		{
 			_id: req.body.videoId,
 			comments: {
 				$elemMatch: {
 					_id: req.body.commentId,
-					"replies._id": req.body.replyId,
-					"replies.likes": user._id
+					replies: {
+						$elemMatch: {
+							_id: req.body.replyId,
+							likes: user._id
+						}
+					}
 				}
 			}
 		},
-		"comments.replies.$"
+		"comments.$"
 	);
 
 	if (video) {
 		liked = false;
+		const reply: any = video.comments[0].replies.id(req.body.replyId);
 
-		const reply: any = video.comments[0].replies[0];
-		reply.likes.splice(reply.likes.indexOf(user._id), 1);
-		video.save();
+		// unlike the reply
+		VideoModel.findByIdAndUpdate(
+			req.body.videoId,
+			{ $pull: { "comments.$[comm].replies.$[rep].likes": user._id } },
+			{
+				arrayFilters: [
+					{ "comm._id": req.body.commentId },
+					{ "rep._id": req.body.replyId }
+				]
+			}
+		)
+			.exec()
+			.catch(err => console.error(err));
 
 		// decrement the total likes of the reply poster
 		UserModel.findByIdAndUpdate(reply.postedBy, { $inc: { totalLikes: -1 } })
@@ -523,12 +538,23 @@ export const likeOrUnlikeReply = asyncHandler(async (req, res) => {
 					}
 				}
 			},
-			"comments.replies.$"
+			"comments.$"
 		))!;
+		const reply: any = video.comments[0].replies.id(req.body.replyId);
 
-		const reply: any = video.comments[0].replies[0];
-		reply.likes.push(user._id);
-		video.save();
+		// like the reply
+		VideoModel.findByIdAndUpdate(
+			req.body.videoId,
+			{ $push: { "comments.$[comm].replies.$[rep].likes": user._id } },
+			{
+				arrayFilters: [
+					{ "comm._id": req.body.commentId },
+					{ "rep._id": req.body.replyId }
+				]
+			}
+		)
+			.exec()
+			.catch(err => console.error(err));
 
 		// increment the total likes of the reply poster
 		UserModel.findByIdAndUpdate(reply.postedBy, { $inc: { totalLikes: 1 } })
@@ -549,6 +575,18 @@ export const getReplies = asyncHandler(async (req, res) => {
 	)
 		.populate("comments.replies.postedBy", "username name -_id")
 		.lean())!.comments[0].replies;
+
+	if (req.query.username) {
+		const user = (await UserModel.findOne(
+			{ username: req.query.username as string },
+			"_id"
+		))!;
+
+		replies.forEach(reply => {
+			reply.hasLiked =
+				(reply.likes as any[]).findIndex(elem => user._id.equals(elem)) !== -1;
+		});
+	}
 
 	replies.forEach(reply => {
 		reply.replyId = reply._id;
