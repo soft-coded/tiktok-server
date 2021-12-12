@@ -559,7 +559,6 @@ export const getReplies = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ replies }));
 });
 
-const chunkSize = 1048576; // 1MB
 export const streamVideo = asyncHandler(async (req, res) => {
 	const video = (await VideoModel.findById(
 		req.params.videoId,
@@ -571,7 +570,7 @@ export const streamVideo = asyncHandler(async (req, res) => {
 	const videoSize = statSync(path).size;
 	// range looks like: "bytes=32123-"
 	const start = Number(range.replace(/\D/g, "")); // get rid of all non digit characters
-	const end = Math.min(start + chunkSize, videoSize - 1);
+	const end = Math.min(start + constants.chunkSize, videoSize - 1);
 
 	// response headers
 	res.writeHead(206, {
@@ -584,7 +583,7 @@ export const streamVideo = asyncHandler(async (req, res) => {
 	const videoStream = createReadStream(path, {
 		start,
 		end,
-		highWaterMark: chunkSize
+		highWaterMark: constants.chunkSize
 	});
 	videoStream.pipe(res);
 });

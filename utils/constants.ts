@@ -10,5 +10,6 @@ export default {
 	musicMaxLen: 30,
 	commentMaxLen: 300,
 	pfpFolder: "profile-photos",
-	videosFolder: "uploads"
+	videosFolder: "uploads",
+	chunkSize: 1048576 // 1MB
 };
