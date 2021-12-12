@@ -229,8 +229,7 @@ export const deleteVideo = asyncHandler(async (req, res) => {
 	// file deletion and removal doesn't need to be synchronous
 	removeFile(video.video, constants.videosFolder);
 	UserModel.findByIdAndUpdate(user._id, {
-		$pull: { "videos.uploaded": video._id },
-		$inc: { totalLikes: -video.likes.length } // decrement the totalLikes of the uploader
+		$pull: { "videos.uploaded": video._id }
 	}).exec(); // !!! does not work without calling exec() !!!
 
 	// need to remove for whoever liked it as well
