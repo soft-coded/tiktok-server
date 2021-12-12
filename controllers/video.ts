@@ -449,7 +449,7 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	).lean();
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments.replies._id comments.replies.postedBy comments._id"
+		"comments.replies comments._id"
 	))!;
 
 	const reply = video.comments
