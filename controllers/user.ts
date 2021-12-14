@@ -54,8 +54,8 @@ export const getUser = asyncHandler(async (req, res) => {
 			{ username: req.params.username },
 			"followers -_id"
 		)
-			.populate("followers", "username -_id")
-			.lean())!.followers;
+			.populate("followers", "username name -_id")
+			.lean())!.followers.reverse(); // reversed to keep the latest first
 
 	if (query.following === "num")
 		user.following = await getNum("following", req.params.username);
@@ -64,8 +64,8 @@ export const getUser = asyncHandler(async (req, res) => {
 			{ username: req.params.username },
 			"following -_id"
 		)
-			.populate("following", "username -_id")
-			.lean())!.following;
+			.populate("following", "username name -_id")
+			.lean())!.following.reverse();
 
 	if (query.videos === "uploaded")
 		user.videos = (await UserModel.findOne(
@@ -171,14 +171,14 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 	const loggedInAs = (await UserModel.findOne(
 		{ username: req.body.loggedInAs },
 		"_id"
-	))!;
+	).lean())!;
 	let toFollow = await UserModel.findOne(
 		{
 			username: req.body.toFollow,
-			followers: loggedInAs._id
+			followers: loggedInAs._id as any
 		},
 		"_id"
-	);
+	).lean();
 	let followed = true; // whether followed or unfollowed
 
 	if (toFollow) {
@@ -201,7 +201,7 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 		toFollow = (await UserModel.findOne(
 			{ username: req.body.toFollow },
 			"_id"
-		))!;
+		).lean())!;
 
 		// add to loggedInAs' following list
 		UserModel.findByIdAndUpdate(loggedInAs._id, {
