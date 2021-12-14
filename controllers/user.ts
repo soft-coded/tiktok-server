@@ -16,6 +16,7 @@ type Query = {
 	following?: "list" | "num";
 	followers?: "list" | "num";
 	videos?: "uploaded" | "liked";
+	loggedInAs?: string;
 };
 
 async function getNum(field: string, username: string) {
@@ -76,6 +77,18 @@ export const getUser = asyncHandler(async (req, res) => {
 			{ username: req.params.username },
 			{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
 		).lean())!.videos;
+
+	if (query.loggedInAs) {
+		const loggedInAs = (await UserModel.findOne(
+			{ username: query.loggedInAs },
+			"_id"
+		).lean())!;
+
+		user.isFollowing = await UserModel.exists({
+			username: req.params.username,
+			followers: loggedInAs._id as any
+		});
+	}
 
 	res.status(200).json(successRes(user));
 });

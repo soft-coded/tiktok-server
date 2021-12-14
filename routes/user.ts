@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 
 import {
 	getUser,
@@ -115,6 +115,12 @@ router
 			.exists({ checkFalsy: true })
 			.withMessage("Invalid URL")
 			.bail()
+			.custom(isValidUser),
+		query("loggedInAs")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Logged in as invalid user")
 			.custom(isValidUser),
 		valRes,
 		getUser

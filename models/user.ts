@@ -25,6 +25,7 @@ export interface ExtendedUser extends Omit<User, "followers" | "following"> {
 	num?: number;
 	followers?: number | User[];
 	following?: number | User[];
+	isFollowing?: boolean;
 }
 
 export const RefType = (ref: string) => ({
