@@ -153,3 +153,57 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 	res.status(200).json(successRes({ username: req.body.username }));
 });
+
+export const followOrUnfollow = asyncHandler(async (req, res) => {
+	const loggedInAs = (await UserModel.findOne(
+		{ username: req.body.loggedInAs },
+		"_id"
+	))!;
+	let toFollow = await UserModel.findOne(
+		{
+			username: req.body.toFollow,
+			followers: loggedInAs._id
+		},
+		"_id"
+	);
+	let followed = true; // whether followed or unfollowed
+
+	if (toFollow) {
+		followed = false;
+
+		// remove from loggedInAs' following list
+		UserModel.findByIdAndUpdate(loggedInAs._id, {
+			$pull: { following: toFollow._id }
+		})
+			.exec()
+			.catch(err => console.error(err));
+
+		// remove from toFollow's followers list
+		UserModel.findByIdAndUpdate(toFollow._id, {
+			$pull: { followers: loggedInAs._id }
+		})
+			.exec()
+			.catch(err => console.error(err));
+	} else {
+		toFollow = (await UserModel.findOne(
+			{ username: req.body.toFollow },
+			"_id"
+		))!;
+
+		// add to loggedInAs' following list
+		UserModel.findByIdAndUpdate(loggedInAs._id, {
+			$push: { following: toFollow._id }
+		})
+			.exec()
+			.catch(err => console.error(err));
+
+		// add to toFollow's followers list
+		UserModel.findByIdAndUpdate(toFollow._id, {
+			$push: { followers: loggedInAs._id }
+		})
+			.exec()
+			.catch(err => console.error(err));
+	}
+
+	res.status(200).json(successRes({ followed }));
+});

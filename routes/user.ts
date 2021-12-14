@@ -7,7 +7,8 @@ import {
 	updatePfp,
 	deletePfp,
 	changePassword,
-	getPfp
+	getPfp,
+	followOrUnfollow
 } from "../controllers/user";
 import { valRes, isValidUser, verifyToken } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
@@ -85,6 +86,25 @@ router
 		valRes,
 		verifyToken,
 		changePassword
+	);
+
+router
+	.route("/follow")
+	.post(
+		body("toFollow")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("To-follow username is required")
+			.bail()
+			.custom(isValidUser),
+		body("loggedInAs")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Log in to continue")
+			.bail()
+			.custom(isValidUser),
+		valRes,
+		followOrUnfollow
 	);
 
 router
