@@ -88,24 +88,24 @@ router
 		changePassword
 	);
 
-router
-	.route("/follow")
-	.post(
-		body("toFollow")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("To-follow username is required")
-			.bail()
-			.custom(isValidUser),
-		body("loggedInAs")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue")
-			.bail()
-			.custom(isValidUser),
-		valRes,
-		followOrUnfollow
-	);
+router.route("/follow").post(
+	body("toFollow")
+		.trim()
+		.exists({ checkFalsy: true })
+		.withMessage("To-follow username is required")
+		.bail()
+		.custom(isValidUser),
+	body("loggedInAs")
+		.trim()
+		.exists({ checkFalsy: true })
+		.withMessage("Log in to continue")
+		.bail()
+		.custom(isValidUser)
+		.custom((val, { req }) => val !== req.body.toFollow)
+		.withMessage("You cannot follow yourself"),
+	valRes,
+	followOrUnfollow
+);
 
 router
 	.route("/:username")
