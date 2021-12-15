@@ -42,6 +42,7 @@ export interface ExtendedVideo
 	comments?: any;
 	likes?: number | User[];
 	save?: any;
+	isFollowing?: boolean;
 }
 
 const reply = {

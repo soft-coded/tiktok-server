@@ -7,6 +7,7 @@ import { removeFile, getRelativePath } from "../utils/fileHander";
 import VideoModel, { ExtendedVideo } from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
+import { isFollowing } from "./user";
 
 /*
 A single video object will look like this:
@@ -188,8 +189,16 @@ export const getVideo = asyncHandler(async (req, res) => {
 		video.comments = vidData.comments;
 	}
 
-	if (query.username)
+	if (query.username) {
 		video.hasLiked = await hasLiked(video.videoId!, query.username);
+		video.isFollowing = await isFollowing(
+			query.username,
+			video.uploader?.username ||
+				(await VideoModel.findById(req.params.id, "uploader -_id")
+					.populate("uploader", "username -_id")
+					.lean())!.uploader.username
+		);
+	}
 
 	// increment the number of views on the video
 	VideoModel.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).catch(

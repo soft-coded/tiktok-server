@@ -4,6 +4,7 @@ import VideoModel, { ExtendedVideo } from "../models/video";
 import UserModel from "../models/user";
 import { successRes } from "../utils/success";
 import { hasLiked } from "./video";
+import { isFollowing } from "./user";
 
 const feedLimit = 10;
 
@@ -43,6 +44,11 @@ export const getFeed = asyncHandler(async (req, res) => {
 			video.hasLiked = await hasLiked(
 				video.videoId!,
 				req.query.username as string
+			);
+
+			video.isFollowing = await isFollowing(
+				req.query.username as string,
+				video.uploader.username
 			);
 		}
 	}

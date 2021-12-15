@@ -31,6 +31,18 @@ async function getNum(field: string, username: string) {
 	return userData.num;
 }
 
+export async function isFollowing(loggedInAs: string, toCheck: string) {
+	const user = (await UserModel.findOne(
+		{ username: loggedInAs },
+		"_id"
+	).lean())!;
+
+	return await UserModel.exists({
+		username: toCheck,
+		followers: user._id as any
+	});
+}
+
 export const getUser = asyncHandler(async (req, res) => {
 	const query: Query = req.query;
 	let projection =
@@ -78,17 +90,8 @@ export const getUser = asyncHandler(async (req, res) => {
 			{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
 		).lean())!.videos;
 
-	if (query.loggedInAs) {
-		const loggedInAs = (await UserModel.findOne(
-			{ username: query.loggedInAs },
-			"_id"
-		).lean())!;
-
-		user.isFollowing = await UserModel.exists({
-			username: req.params.username,
-			followers: loggedInAs._id as any
-		});
-	}
+	if (query.loggedInAs)
+		user.isFollowing = await isFollowing(query.loggedInAs, req.params.username);
 
 	res.status(200).json(successRes(user));
 });
