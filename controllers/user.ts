@@ -115,10 +115,8 @@ export const getUser = asyncHandler(async (req, res) => {
 			.populate("following", "username name -_id")
 			.lean())!.following.reverse();
 
-	if (query.videos === "uploaded")
-		user.videos = await getUserVideos(req.params.username!, "uploaded");
-	else if (query.videos === "liked")
-		user.videos = await getUserVideos(req.params.username!, "liked");
+	if (query.videos === "uploaded" || query.videos === "liked")
+		user.videos = await getUserVideos(req.params.username!, query.videos);
 
 	if (query.loggedInAs)
 		user.isFollowing = await isFollowing(query.loggedInAs, req.params.username);
