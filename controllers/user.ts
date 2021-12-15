@@ -31,6 +31,42 @@ async function getNum(field: string, username: string) {
 	return userData.num;
 }
 
+async function getUserVideos(username: string, type: "liked" | "uploaded") {
+	const videos: any = (await UserModel.findOne(
+		{ username },
+		"-_id videos." + type
+	)
+		.populate("videos." + type, {
+			videoId: "$_id",
+			_id: 0,
+			totalComments: 1,
+			totalLikes: { $size: "$likes" },
+			music: 1,
+			uploader: 1,
+			caption: 1,
+			tags: 1,
+			shares: 1,
+			views: 1,
+			createdAt: 1
+		})
+		.lean())!.videos[type];
+
+	for (let vid of videos) {
+		// did not work in populate so had to do it here
+		vid.likes = vid.totalLikes;
+		delete vid.totalLikes;
+		vid.comments = vid.totalComments;
+		delete vid.totalComments;
+
+		vid.uploader = await UserModel.findById(
+			vid.uploader,
+			"username name -_id"
+		).lean();
+	}
+
+	return videos.reverse(); // reversed to keep the latest first
+}
+
 export async function isFollowing(loggedInAs: string, toCheck: string) {
 	const user = (await UserModel.findOne(
 		{ username: loggedInAs },
@@ -80,15 +116,9 @@ export const getUser = asyncHandler(async (req, res) => {
 			.lean())!.following.reverse();
 
 	if (query.videos === "uploaded")
-		user.videos = (await UserModel.findOne(
-			{ username: req.params.username },
-			{ videos: { $reverseArray: "$videos.uploaded" }, _id: 0 }
-		).lean())!.videos;
+		user.videos = await getUserVideos(req.params.username!, "uploaded");
 	else if (query.videos === "liked")
-		user.videos = (await UserModel.findOne(
-			{ username: req.params.username },
-			{ videos: { $reverseArray: "$videos.liked" }, _id: 0 }
-		).lean())!.videos;
+		user.videos = await getUserVideos(req.params.username!, "liked");
 
 	if (query.loggedInAs)
 		user.isFollowing = await isFollowing(query.loggedInAs, req.params.username);

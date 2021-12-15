@@ -21,11 +21,13 @@ export interface User {
 	createdAt: Date | number;
 }
 
-export interface ExtendedUser extends Omit<User, "followers" | "following"> {
+export interface ExtendedUser
+	extends Omit<User, "followers" | "following" | "videos"> {
 	num?: number;
 	followers?: number | User[];
 	following?: number | User[];
 	isFollowing?: boolean;
+	videos?: Video[];
 }
 
 export const RefType = (ref: string) => ({
