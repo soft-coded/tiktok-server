@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 
 import VideoModel, { ExtendedVideo } from "../models/video";
+import UserModel from "../models/user";
 import { successRes } from "../utils/success";
 import { hasLiked } from "./video";
 
@@ -49,4 +50,13 @@ export const getFeed = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ videos }));
 
 	videos.forEach(video => incrementViews(video.videoId!));
+});
+
+export const getSuggested = asyncHandler(async (req, res) => {
+	const users = await UserModel.find({}, "username name -_id", {
+		sort: "-totalLikes -followers createdAt",
+		limit: +req.query!.limit! || 0
+	}).lean();
+
+	res.status(200).json(successRes({ users }));
 });
