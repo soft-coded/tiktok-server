@@ -83,7 +83,7 @@ export const getUser = asyncHandler(async (req, res) => {
 		user.videos = (await UserModel.findOne(
 			{ username: req.params.username },
 			"-_id videos." + query.videos
-		))!.videos[query.videos];
+		))!.videos[query.videos].reverse();
 
 	if (query.loggedInAs)
 		user.isFollowing = await isFollowing(query.loggedInAs, req.params.username);
