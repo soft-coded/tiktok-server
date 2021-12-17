@@ -104,7 +104,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 	await user.save();
 
-	res.status(200).json(successRes({ data: user }));
+	res.status(200).json(successRes(user));
 });
 
 export const getPfp = asyncHandler(async (req, res) => {
