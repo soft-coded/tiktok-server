@@ -107,9 +107,11 @@ export const updateUser = asyncHandler(async (req, res) => {
 			"name email description profilePhoto password"
 		))!;
 		const updateQuery: UpdateQuery = req.body;
+		let fileNeeded = false; // whether an unnecessary file was sent
 
 		if (updateQuery.changePfp === "update") {
 			if (!req.file) throw new CustomError(500, "Photo upload unsuccessful");
+			fileNeeded = true;
 			// remove the old pfp if it's not the default one
 			// !!! do not remove the default photo !!!
 			if (user.profilePhoto !== "default.png")
@@ -140,14 +142,12 @@ export const updateUser = asyncHandler(async (req, res) => {
 		await user.save();
 
 		res.status(200).json(successRes());
+		// remove the unnecessary file, if sent
+		if (!fileNeeded && req.file)
+			removeFile(req.file.filename, constants.pfpFolder);
 	} catch (err: any) {
 		if (req.file) {
-			removeFile(
-				req.file.filename,
-				req.file.fieldname === "video"
-					? constants.videosFolder
-					: constants.pfpFolder
-			);
+			removeFile(req.file.filename, constants.pfpFolder);
 		}
 		throw err;
 	}
