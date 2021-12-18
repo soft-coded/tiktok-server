@@ -27,65 +27,6 @@ router
 			.custom(isValidUser),
 		valRes,
 		getPfp
-	)
-	.post(
-		uploadPhoto.single("profilePhoto"),
-		param("username")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue")
-			.bail()
-			.custom(isValidUser),
-		body("token")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Token is required"),
-		valRes,
-		verifyToken,
-		updatePfp
-	)
-	.delete(
-		param("username")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue")
-			.bail()
-			.custom(isValidUser),
-		body("token")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Token is required"),
-		valRes,
-		verifyToken,
-		deletePfp
-	);
-
-router
-	.route("/changePassword")
-	.post(
-		body("oldPassword")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Old password is required"),
-		body("newPassword")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("New password cannot be empty")
-			.isLength({ min: constants.passwordMinLen })
-			.withMessage("New password too short"),
-		body("username")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Log in to continue")
-			.bail()
-			.custom(isValidUser),
-		body("token")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Token is required"),
-		valRes,
-		verifyToken,
-		changePassword
 	);
 
 router.route("/follow").post(
@@ -126,12 +67,29 @@ router
 		getUser
 	)
 	.patch(
+		uploadPhoto.single("profilePhoto"),
 		param("username")
 			.trim()
 			.exists({ checkFalsy: true })
 			.withMessage("Invalid URL")
 			.bail()
 			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Token is required"),
+		body("oldPassword")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Old password is required"),
+		body("newPassword")
+			.optional()
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("New password cannot be empty")
+			.isLength({ min: constants.passwordMinLen })
+			.withMessage("New password too short"),
 		body("name")
 			.optional()
 			.trim()
@@ -152,10 +110,6 @@ router
 			.withMessage("Bio cannot be empty")
 			.isLength({ max: constants.descriptionMaxLen })
 			.withMessage("Bio too long"),
-		body("token")
-			.trim()
-			.exists({ checkFalsy: true })
-			.withMessage("Token is required"),
 		valRes,
 		verifyToken,
 		updateUser

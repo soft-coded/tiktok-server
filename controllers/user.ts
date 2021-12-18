@@ -91,20 +91,66 @@ export const getUser = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes(user));
 });
 
+type UpdateQuery = {
+	changePfp?: "update" | "delete";
+	oldPassword?: string;
+	newPassword?: string;
+	name?: string;
+	email?: string;
+	description?: string;
+};
+
 export const updateUser = asyncHandler(async (req, res) => {
-	const user = (await UserModel.findOne(
-		{ username: req.params.username },
-		"name email description username"
-	))!;
-	const { name, email, description } = req.body;
+	try {
+		const user = (await UserModel.findOne(
+			{ username: req.params.username },
+			"name email description profilePhoto password"
+		))!;
+		const updateQuery: UpdateQuery = req.body;
 
-	if (name) user.name = name;
-	if (email) user.email = email;
-	if (description) user.description = description;
+		if (updateQuery.changePfp === "update") {
+			if (!req.file) throw new CustomError(500, "Photo upload unsuccessful");
+			// remove the old pfp if it's not the default one
+			// !!! do not remove the default photo !!!
+			if (user.profilePhoto !== "default.png")
+				removeFile(user.profilePhoto, constants.pfpFolder);
 
-	await user.save();
+			user.profilePhoto = req.file.filename;
+		} else if (updateQuery.changePfp === "delete") {
+			if (user.profilePhoto !== "default.png")
+				removeFile(user.profilePhoto, constants.pfpFolder);
+			else throw new CustomError(404, "Profile photo does not exist");
 
-	res.status(200).json(successRes(user));
+			user.profilePhoto = "default.png";
+		}
+
+		if (updateQuery.oldPassword && updateQuery.newPassword) {
+			const matches = await compare(updateQuery.oldPassword, user.password);
+			if (!matches) throw new CustomError(400, "Incorrect old password");
+
+			const hashedPassword = await hash(updateQuery.newPassword, 10);
+			user.password = hashedPassword;
+		} else if (updateQuery.oldPassword || updateQuery.newPassword)
+			throw new CustomError(400, "Both old and new passwords are required");
+
+		if (updateQuery.name) user.name = updateQuery.name;
+		if (updateQuery.email) user.email = updateQuery.email;
+		if (updateQuery.description) user.description = updateQuery.description;
+
+		await user.save();
+
+		res.status(200).json(successRes());
+	} catch (err: any) {
+		if (req.file) {
+			removeFile(
+				req.file.filename,
+				req.file.fieldname === "video"
+					? constants.videosFolder
+					: constants.pfpFolder
+			);
+		}
+		throw err;
+	}
 });
 
 export const getPfp = asyncHandler(async (req, res) => {
@@ -117,20 +163,6 @@ export const getPfp = asyncHandler(async (req, res) => {
 });
 
 export const updatePfp = asyncHandler(async (req, res) => {
-	if (!req.file) throw new CustomError(500, "Photo upload unsuccessful");
-
-	const user = (await UserModel.findOne(
-		{ username: req.params.username },
-		"profilePhoto"
-	))!;
-	// remove the old pfp if it's not the default one
-	// !!! do not remove the default photo !!!
-	if (user.profilePhoto !== "default.png")
-		removeFile(user.profilePhoto, constants.pfpFolder);
-
-	user.profilePhoto = req.file.filename;
-	await user.save();
-
 	res.status(200).json(successRes());
 });
 
