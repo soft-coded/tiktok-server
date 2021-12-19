@@ -117,7 +117,12 @@ export const getFollowingVids = asyncHandler(async (req, res) => {
 	const videos = [];
 	for (let following of users) {
 		for (let uploadedVid of following.videos.uploaded) {
-			videos.push(await fetchVidFromDB(uploadedVid as any));
+			const vid = await fetchVidFromDB(uploadedVid as any);
+			vid.hasLiked = await hasLiked(
+				uploadedVid as any,
+				req.query.username as string
+			);
+			videos.push(vid);
 		}
 	}
 	shuffle(videos);
