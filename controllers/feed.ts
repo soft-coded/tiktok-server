@@ -92,7 +92,7 @@ export const getSuggested = asyncHandler(async (req, res) => {
 			username: 1,
 			name: 1,
 			_id: 0,
-			"videos.uploaded": { $slice: [0, 1] }
+			"videos.uploaded": { $slice: [-1, 1] }
 		},
 		{
 			sort: "-totalLikes -followers createdAt",
@@ -110,7 +110,7 @@ export const getFollowingVids = asyncHandler(async (req, res) => {
 	)
 		.populate("following", {
 			_id: 0,
-			"videos.uploaded": { $slice: [0, followingLimit] }
+			"videos.uploaded": { $slice: [-1, followingLimit] }
 		})
 		.lean())!.following;
 
