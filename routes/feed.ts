@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { query } from "express-validator";
 
-import { getFeed, getSuggested } from "../controllers/feed";
+import { getFeed, getFollowingVids, getSuggested } from "../controllers/feed";
 import { isValidUser, valRes } from "../controllers/validation";
 
 const router = Router();
@@ -32,5 +32,18 @@ router.route("/suggested").get(
 	valRes,
 	getSuggested
 );
+
+router
+	.route("/following")
+	.get(
+		query("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Username is required")
+			.bail()
+			.custom(isValidUser),
+		valRes,
+		getFollowingVids
+	);
 
 export default router;

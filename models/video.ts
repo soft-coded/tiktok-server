@@ -34,7 +34,7 @@ export interface Video {
 }
 
 export interface ExtendedVideo
-	extends Omit<Video, "comments" | "_id" | "likes"> {
+	extends Omit<Video, "comments" | "_id" | "likes" | "totalComments"> {
 	_id?: string;
 	num?: number;
 	videoId?: string;
@@ -43,6 +43,8 @@ export interface ExtendedVideo
 	likes?: number | User[];
 	save?: any;
 	isFollowing?: boolean;
+	totalLikes?: number;
+	totalComments?: number;
 }
 
 const reply = {
