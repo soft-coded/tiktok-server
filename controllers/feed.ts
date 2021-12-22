@@ -158,7 +158,13 @@ export const search = asyncHandler(async (req, res) => {
 		{
 			$or: [{ caption: regex }, { tags: regex as any }]
 		},
-		"caption views uploader -_id",
+		{
+			caption: 1,
+			views: 1,
+			uploader: 1,
+			_id: 0,
+			videoId: "$_id"
+		},
 		{
 			populate: { path: "uploader", select: "username -_id" },
 			lean: true
