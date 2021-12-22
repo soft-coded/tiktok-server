@@ -154,7 +154,7 @@ export const search = asyncHandler(async (req, res) => {
 		return;
 	}
 
-	const videos = await VideoModel.find(
+	const videos: ExtendedVideo[] = await VideoModel.find(
 		{
 			$or: [{ caption: regex }, { tags: regex as any }]
 		},
@@ -172,4 +172,6 @@ export const search = asyncHandler(async (req, res) => {
 	);
 
 	res.status(200).json(successRes({ videos }));
+
+	videos.forEach(video => incrementViews(video.videoId!));
 });
