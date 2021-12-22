@@ -131,3 +131,39 @@ export const getFollowingVids = asyncHandler(async (req, res) => {
 
 	videos.forEach(video => incrementViews(video.videoId!));
 });
+
+export const search = asyncHandler(async (req, res) => {
+	const regex = new RegExp(req.body.query, "ig");
+
+	if (req.body.send === "accounts") {
+		const accounts = await UserModel.find(
+			{
+				$or: [{ username: regex }, { name: regex }]
+			},
+			{
+				_id: 0,
+				username: 1,
+				name: 1,
+				followers: { $size: "$followers" },
+				description: 1
+			},
+			{ lean: true }
+		);
+
+		res.status(200).json(successRes({ accounts }));
+		return;
+	}
+
+	const videos = await VideoModel.find(
+		{
+			$or: [{ caption: regex }, { tags: regex as any }]
+		},
+		"caption views uploader -_id",
+		{
+			populate: { path: "uploader", select: "username -_id" },
+			lean: true
+		}
+	);
+
+	res.status(200).json(successRes({ videos }));
+});

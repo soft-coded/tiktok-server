@@ -1,7 +1,12 @@
 import { Router } from "express";
-import { query } from "express-validator";
+import { body, query } from "express-validator";
 
-import { getFeed, getFollowingVids, getSuggested } from "../controllers/feed";
+import {
+	getFeed,
+	getFollowingVids,
+	getSuggested,
+	search
+} from "../controllers/feed";
 import { isValidUser, valRes } from "../controllers/validation";
 
 const router = Router();
@@ -45,5 +50,20 @@ router
 		valRes,
 		getFollowingVids
 	);
+
+router.route("/search").post(
+	body("query")
+		.trim()
+		.exists({ checkFalsy: true })
+		.withMessage("Search query is required"),
+	body("send")
+		.trim()
+		.exists({ checkFalsy: true })
+		.withMessage("'Send' property is required")
+		.custom(val => val === "accounts" || val === "videos")
+		.withMessage("Invalid 'send' property value"),
+	valRes,
+	search
+);
 
 export default router;

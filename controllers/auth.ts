@@ -20,7 +20,9 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const signup = asyncHandler(async (req, res) => {
-	let user: any = await UserModel.exists({ username: req.body.username });
+	let user: any = await UserModel.exists({
+		username: new RegExp(req.body.username, "i")
+	});
 	if (user) throw new CustomError(400, "Username already registered");
 
 	user = await UserModel.exists({ email: req.body.email });
