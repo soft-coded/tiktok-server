@@ -162,6 +162,7 @@ export const search = asyncHandler(async (req, res) => {
 			caption: 1,
 			views: 1,
 			uploader: 1,
+			tags: 1,
 			_id: 0,
 			videoId: "$_id"
 		},
