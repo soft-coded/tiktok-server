@@ -21,6 +21,12 @@ router
 			.withMessage("Username cannot be empty")
 			.bail()
 			.custom(isValidUser),
+		query("skip")
+			.optional()
+			.trim()
+			.toInt()
+			.exists({ checkFalsy: true })
+			.withMessage("Invalid skip value"),
 		valRes,
 		getFeed
 	);
@@ -47,6 +53,12 @@ router
 			.withMessage("Username is required")
 			.bail()
 			.custom(isValidUser),
+		query("skip")
+			.optional()
+			.trim()
+			.toInt()
+			.exists({ checkFalsy: true })
+			.withMessage("Invalid skip value"),
 		valRes,
 		getFollowingVids
 	);

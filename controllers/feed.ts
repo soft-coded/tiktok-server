@@ -59,6 +59,7 @@ export const getFeed = asyncHandler(async (req, res) => {
 		},
 		{
 			limit: feedLimit,
+			skip: req.query.skip ? +req.query.skip : 0,
 			lean: true,
 			sort: "-views -likes createdAt",
 			populate: { path: "uploader", select: "username name -_id" }
@@ -110,7 +111,14 @@ export const getFollowingVids = asyncHandler(async (req, res) => {
 	)
 		.populate("following", {
 			_id: 0,
-			"videos.uploaded": { $slice: [-1, followingLimit] }
+			"videos.uploaded": {
+				$slice: [
+					req.query.skip
+						? -parseInt(req.query.skip as string)
+						: -followingLimit,
+					followingLimit
+				]
+			}
 		})
 		.lean())!.following;
 
