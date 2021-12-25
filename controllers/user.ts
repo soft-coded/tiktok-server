@@ -162,41 +162,6 @@ export const getPfp = asyncHandler(async (req, res) => {
 	res.sendFile(getRelativePath(constants.pfpFolder, user!.profilePhoto));
 });
 
-export const updatePfp = asyncHandler(async (req, res) => {
-	res.status(200).json(successRes());
-});
-
-export const deletePfp = asyncHandler(async (req, res) => {
-	const user = (await UserModel.findOne(
-		{ username: req.params.username },
-		"profilePhoto"
-	))!;
-
-	if (user.profilePhoto !== "default.png")
-		removeFile(user.profilePhoto, constants.pfpFolder);
-	else throw new CustomError(404, "Profile photo does not exist");
-
-	user.profilePhoto = "default.png";
-	await user.save();
-
-	res.status(200).json(successRes());
-});
-
-export const changePassword = asyncHandler(async (req, res) => {
-	const user = (await UserModel.findOne(
-		{ username: req.body.username },
-		"password"
-	))!;
-	const matches = await compare(req.body.oldPassword, user.password);
-	if (!matches) throw new CustomError(400, "Incorrect old password");
-
-	const hashedPassword = await hash(req.body.newPassword, 10);
-	user.password = hashedPassword;
-	await user.save();
-
-	res.status(200).json(successRes({ username: req.body.username }));
-});
-
 export const followOrUnfollow = asyncHandler(async (req, res) => {
 	const loggedInAs = (await UserModel.findOne(
 		{ username: req.body.loggedInAs },

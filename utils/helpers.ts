@@ -1,11 +1,12 @@
 export function shuffle(arr: any[]) {
 	let cur = arr.length,
-		randInd;
-	while (cur !== 0) {
+		randInd,
+		temp;
+	while (cur) {
 		randInd = Math.floor(Math.random() * cur);
 		cur--;
-		[arr[cur], arr[randInd]] = [arr[randInd], arr[cur]];
+		temp = arr[cur];
+		arr[cur] = arr[randInd];
+		arr[randInd] = temp;
 	}
-
-	return arr;
 }

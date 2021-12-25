@@ -61,10 +61,11 @@ export const getFeed = asyncHandler(async (req, res) => {
 			limit: feedLimit,
 			skip: req.query.skip ? +req.query.skip : 0,
 			lean: true,
-			sort: "-views -likes createdAt",
+			sort: "-createdAt -views -likes",
 			populate: { path: "uploader", select: "username name -_id" }
 		}
 	);
+	shuffle(videos);
 
 	// forEach loop won't work here because "await"
 	if (req.query.username) {
@@ -93,11 +94,11 @@ export const getSuggested = asyncHandler(async (req, res) => {
 			username: 1,
 			name: 1,
 			_id: 0,
-			"videos.uploaded": { $slice: [-1, 1] }
+			"videos.uploaded": { $slice: [-2, 1] }
 		},
 		{
-			sort: "-totalLikes -followers createdAt",
-			limit: +req.query!.limit! || 0
+			sort: "-totalLikes -followers -createdAt",
+			limit: req.query.limit ? +req.query.limit : 0
 		}
 	).lean();
 

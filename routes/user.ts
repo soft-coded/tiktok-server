@@ -4,9 +4,6 @@ import { body, param, query } from "express-validator";
 import {
 	getUser,
 	updateUser,
-	updatePfp,
-	deletePfp,
-	changePassword,
 	getPfp,
 	followOrUnfollow
 } from "../controllers/user";
