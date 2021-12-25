@@ -605,6 +605,15 @@ export const getReplies = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ replies }));
 });
 
+// does not need to be async but eh
+export const share = asyncHandler(async (req, res) => {
+	VideoModel.findByIdAndUpdate(req.body.videoId, { $inc: { shares: 1 } })
+		.exec()
+		.catch(err => console.error(err.message));
+
+	res.status(202).json(successRes());
+});
+
 export const streamVideo = asyncHandler(async (req, res) => {
 	const video = (await VideoModel.findById(
 		req.params.videoId,

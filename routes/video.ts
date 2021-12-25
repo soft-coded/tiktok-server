@@ -14,7 +14,8 @@ import {
 	deleteReply,
 	getReplies,
 	streamVideo,
-	likeOrUnlikeReply
+	likeOrUnlikeReply,
+	share
 } from "../controllers/video";
 import { uploadVideo } from "../utils/multer";
 import {
@@ -284,6 +285,19 @@ router
 			.custom(isValidComment),
 		valRes,
 		getReplies
+	);
+
+router
+	.route("/share")
+	.post(
+		body("videoId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Video ID is required")
+			.bail()
+			.custom(isValidVideo),
+		valRes,
+		share
 	);
 
 // route to a single video, keep below everything else
