@@ -5,7 +5,7 @@ import { Video } from "./video";
 export interface Notification {
 	_id?: string;
 	notificationId?: string;
-	type: "likedVideo" | "followed" | "commented";
+	type: "likedVideo" | "followed" | "commented" | "replied";
 	message: string;
 	refId: User | Video | string; // likedVideo id or comment id etc. For followed, same as "by"
 	by: User | string; // followed by or liked by etc (id only)

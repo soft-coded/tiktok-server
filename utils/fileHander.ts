@@ -7,6 +7,6 @@ export function getRelativePath(...paths: string[]) {
 
 export function removeFile(fileName: string, folder: string) {
 	unlink(getRelativePath(folder, fileName), err => {
-		if (err) console.error(err.message);
+		if (err) console.error(err);
 	});
 }

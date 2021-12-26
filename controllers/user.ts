@@ -231,6 +231,9 @@ export const readAllNotifs = asyncHandler(async (req, res) => {
 });
 
 export async function createNotification(userId: string, data: Notification) {
+	// do nothing if it's the uploader's own action
+	if ((userId as any).equals(data.by)) return;
+
 	const user: ExtendedUser = (await UserModel.findById(
 		userId,
 		"notifications"
@@ -239,7 +242,6 @@ export async function createNotification(userId: string, data: Notification) {
 	const notification = user.notifications.create(data);
 	user.notifications.push(notification);
 	await user.save();
-	return notification;
 }
 
 type MetaType = {
@@ -259,10 +261,14 @@ export async function deleteNotification(
 			"notifications"
 		))!;
 		const notification = user.notifications.id(idOrMeta);
-		notification.remove();
-		await user.save();
+		if (notification) {
+			notification.remove();
+			await user.save();
+		}
 		return;
 	}
+	// do nothing if it's the uploader's own action
+	if ((userId as any).equals((idOrMeta as MetaType).by)) return;
 
 	await UserModel.findByIdAndUpdate(userId, {
 		$pull: { notifications: idOrMeta }

@@ -272,28 +272,28 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 			$pull: { likes: liker._id }
 		})
 			.exec()
-			.catch(err => console.error(err.message)); // !! exec() is important !!
+			.catch(err => console.error(err)); // !! exec() is important !!
 
 		// update total likes of the uploader
 		UserModel.findByIdAndUpdate(video.uploader, {
 			$inc: { totalLikes: -1 }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		// update "liked videos" array of liker
 		UserModel.findByIdAndUpdate(liker._id, {
 			$pull: { "videos.liked": video._id }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		// delete the notification
 		deleteNotification("ref", video.uploader as any, {
 			type: "likedVideo",
 			refId: video._id,
 			by: liker._id
-		}).catch(err => console.error(err.message));
+		}).catch(err => console.error(err));
 	} else {
 		video = (await VideoModel.findById(req.body.videoId, "uploader"))!;
 
@@ -301,19 +301,19 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 			$push: { likes: liker._id }
 		})
 			.exec()
-			.catch(err => console.error(err.message)); // !! exec() is important !!
+			.catch(err => console.error(err)); // !! exec() is important !!
 
 		UserModel.findByIdAndUpdate(video.uploader, {
 			$inc: { totalLikes: 1 }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		UserModel.findByIdAndUpdate(liker._id, {
 			$push: { "videos.liked": video._id }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		// notify the uploader
 		createNotification(video.uploader as any, {
@@ -321,7 +321,7 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 			message: req.body.username + " liked your video.",
 			refId: video._id,
 			by: liker._id
-		}).catch(err => console.error(err.message));
+		}).catch(err => console.error(err));
 	}
 
 	res.status(202).json(successRes({ liked }));
@@ -334,7 +334,7 @@ export const comment = asyncHandler(async (req, res) => {
 	))!;
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments._id"
+		"comments._id uploader"
 	))!;
 
 	const comment = video.comments.create({
@@ -351,13 +351,25 @@ export const comment = asyncHandler(async (req, res) => {
 	})
 		.exec()
 		.catch(err => console.error(err));
+
+	// notify the uploader
+	let subComment: string;
+	if (req.body.comment.length < 31) subComment = req.body.comment;
+	else subComment = req.body.comment.substring(0, 30) + "...";
+
+	createNotification(video.uploader as any, {
+		type: "commented",
+		message: req.body.username + " commented on your video: " + subComment,
+		refId: comment._id,
+		by: user._id
+	}).catch(err => console.error(err));
 });
 
 export const deleteComment = asyncHandler(async (req, res) => {
 	const user = await UserModel.findOne({ username: req.body.username }, "_id");
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments._id comments.postedBy comments.replies"
+		"comments._id comments.postedBy comments.replies uploader"
 	))!;
 	const comment = video.comments.id(req.body.commentId);
 	if (!comment.postedBy.equals(user!._id))
@@ -374,6 +386,13 @@ export const deleteComment = asyncHandler(async (req, res) => {
 	})
 		.exec()
 		.catch(err => console.error(err));
+
+	// delete the notification
+	deleteNotification("ref", video.uploader as any, {
+		type: "commented",
+		refId: comment._id,
+		by: comment.postedBy
+	}).catch(err => console.error(err));
 });
 
 export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
@@ -401,14 +420,14 @@ export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
 			{ arrayFilters: [{ "elem._id": req.body.commentId }] }
 		)
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		// decrement totalLikes of the comment poster
 		UserModel.findByIdAndUpdate(video.comments[0].postedBy, {
 			$inc: { totalLikes: -1 }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 	} else {
 		video = (await VideoModel.findOne(
 			{
@@ -425,14 +444,14 @@ export const likeOrUnlikeComment = asyncHandler(async (req, res) => {
 			{ arrayFilters: [{ "elem._id": req.body.commentId }] }
 		)
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 
 		// increment the totalLikes of the comment poster
 		UserModel.findByIdAndUpdate(video.comments[0].postedBy, {
 			$inc: { totalLikes: 1 }
 		})
 			.exec()
-			.catch(err => console.error(err.message));
+			.catch(err => console.error(err));
 	}
 
 	res.status(202).json(successRes({ liked }));
@@ -445,7 +464,7 @@ export const reply = asyncHandler(async (req, res) => {
 	))!;
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments.replies comments._id"
+		"comments.replies comments._id uploader"
 	))!;
 	const replies = video.comments.id(req.body.commentId).replies;
 
@@ -463,6 +482,18 @@ export const reply = asyncHandler(async (req, res) => {
 	})
 		.exec()
 		.catch(err => console.error(err));
+
+	// notify the uploader
+	let subComment: string;
+	if (req.body.comment.length < 31) subComment = req.body.comment;
+	else subComment = req.body.comment.substring(0, 30) + "...";
+
+	createNotification(video.uploader as any, {
+		type: "replied",
+		message: req.body.username + " replied to your comment: " + subComment,
+		refId: reply._id,
+		by: user._id
+	}).catch(err => console.error(err));
 });
 
 export const deleteReply = asyncHandler(async (req, res) => {
@@ -472,7 +503,7 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	).lean();
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments.replies comments._id"
+		"comments.replies comments._id uploader"
 	))!;
 
 	const reply = video.comments
@@ -493,6 +524,13 @@ export const deleteReply = asyncHandler(async (req, res) => {
 	})
 		.exec()
 		.catch(err => console.error(err));
+
+	// delete the notification
+	deleteNotification("ref", video.uploader as any, {
+		type: "commented",
+		refId: reply._id,
+		by: reply.postedBy
+	}).catch(err => console.error(err));
 });
 
 export const likeOrUnlikeReply = asyncHandler(async (req, res) => {
@@ -620,11 +658,10 @@ export const getReplies = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes({ replies }));
 });
 
-// does not need to be async but eh
 export const share = asyncHandler(async (req, res) => {
 	VideoModel.findByIdAndUpdate(req.body.videoId, { $inc: { shares: 1 } })
 		.exec()
-		.catch(err => console.error(err.message));
+		.catch(err => console.error(err));
 
 	res.status(202).json(successRes());
 });
