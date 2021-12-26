@@ -2,6 +2,15 @@ import { Schema, model, SchemaTypes } from "mongoose";
 
 import { Video } from "./video";
 
+interface Notification {
+	_id?: string;
+	notificationId?: string;
+	type: "likedVideo" | "followed" | "commented";
+	message: string;
+	by: User | string; // followed by or liked by etc
+	createdAt: Date | number;
+}
+
 export interface User {
 	_id: string;
 	username: string;
@@ -18,6 +27,7 @@ export interface User {
 	following: User[];
 	followers: User[];
 	interestedIn: string[];
+	notifications: Notification[];
 	createdAt: Date | number;
 }
 
@@ -33,6 +43,26 @@ export interface ExtendedUser
 export const RefType = (ref: string) => ({
 	type: SchemaTypes.ObjectId,
 	ref
+});
+
+const NotificationSchema = new Schema<Notification>({
+	type: {
+		type: String,
+		required: true
+	},
+	message: {
+		type: String,
+		required: true
+	},
+	by: {
+		...RefType("User"),
+		required: true
+	},
+	createdAt: {
+		type: Date,
+		default: Date.now,
+		immutable: true
+	}
 });
 
 export default model<User>(
@@ -75,6 +105,7 @@ export default model<User>(
 		following: [RefType("User")],
 		followers: [RefType("User")],
 		interestedIn: [String], // array of tags, for recommendations
+		notifications: [NotificationSchema],
 		createdAt: {
 			type: Date,
 			default: Date.now,
