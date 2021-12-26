@@ -7,7 +7,7 @@ import { removeFile, getRelativePath } from "../utils/fileHander";
 import VideoModel, { ExtendedVideo } from "../models/video";
 import UserModel from "../models/user";
 import constants from "../utils/constants";
-import { isFollowing } from "./user";
+import { isFollowing, createNotification, deleteNotification } from "./user";
 
 /*
 A single video object will look like this:
@@ -186,7 +186,7 @@ export const getVideo = asyncHandler(async (req, res) => {
 				);
 			}
 		}
-		video.comments = vidData.comments;
+		video.comments = vidData.comments.reverse();
 	}
 
 	if (query.username) {
@@ -287,6 +287,13 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 		})
 			.exec()
 			.catch(err => console.error(err.message));
+
+		// delete the notification
+		deleteNotification("ref", video.uploader as any, {
+			type: "likedVideo",
+			refId: video._id,
+			by: liker._id
+		}).catch(err => console.error(err.message));
 	} else {
 		video = (await VideoModel.findById(req.body.videoId, "uploader"))!;
 
@@ -307,6 +314,14 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 		})
 			.exec()
 			.catch(err => console.error(err.message));
+
+		// notify the uploader
+		createNotification(video.uploader as any, {
+			type: "likedVideo",
+			message: req.body.username + " liked your video.",
+			refId: video._id,
+			by: liker._id
+		}).catch(err => console.error(err.message));
 	}
 
 	res.status(202).json(successRes({ liked }));

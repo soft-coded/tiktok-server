@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { compare, hash } from "bcryptjs";
 
-import UserModel, { ExtendedUser } from "../models/user";
+import UserModel, { ExtendedUser, Notification } from "../models/user";
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
 import { removeFile, getRelativePath } from "../utils/fileHander";
@@ -13,6 +13,7 @@ type Query = {
 	description?: "1";
 	totalLikes?: "1";
 	createdAt?: "1";
+	notifications?: "1";
 	following?: "list" | "num";
 	followers?: "list" | "num";
 	videos?: "uploaded" | "liked";
@@ -53,6 +54,7 @@ export const getUser = asyncHandler(async (req, res) => {
 	if (query.description !== "1") projection += " -description";
 	if (query.totalLikes !== "1") projection += " -totalLikes";
 	if (query.createdAt !== "1") projection += " -createdAt";
+	if (query.notifications !== "1") projection += " -notifications";
 
 	const user: ExtendedUser = await UserModel.findOne(
 		{ username: req.params.username },
@@ -215,3 +217,54 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 
 	res.status(200).json(successRes({ followed }));
 });
+
+export const readAllNotifs = asyncHandler(async (req, res) => {
+	await UserModel.findOneAndUpdate(
+		{ username: req.body.username },
+		{
+			$set: { "notifications.$[elem].read": true }
+		},
+		{ arrayFilters: [{ "elem.read": false }], multi: true }
+	).exec();
+
+	res.status(200).json(successRes());
+});
+
+export async function createNotification(userId: string, data: Notification) {
+	const user: ExtendedUser = (await UserModel.findById(
+		userId,
+		"notifications"
+	))!;
+
+	const notification = user.notifications.create(data);
+	user.notifications.push(notification);
+	await user.save();
+	return notification;
+}
+
+type MetaType = {
+	type: Notification["type"];
+	refId: Notification["refId"];
+	by: Notification["by"];
+};
+
+export async function deleteNotification(
+	using: "ref" | "id",
+	userId: string,
+	idOrMeta: string | MetaType
+) {
+	if (using === "id") {
+		const user: ExtendedUser = (await UserModel.findById(
+			userId,
+			"notifications"
+		))!;
+		const notification = user.notifications.id(idOrMeta);
+		notification.remove();
+		await user.save();
+		return;
+	}
+
+	await UserModel.findByIdAndUpdate(userId, {
+		$pull: { notifications: idOrMeta }
+	}).exec();
+}

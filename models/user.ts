@@ -2,13 +2,15 @@ import { Schema, model, SchemaTypes } from "mongoose";
 
 import { Video } from "./video";
 
-interface Notification {
+export interface Notification {
 	_id?: string;
 	notificationId?: string;
 	type: "likedVideo" | "followed" | "commented";
 	message: string;
-	by: User | string; // followed by or liked by etc
-	createdAt: Date | number;
+	refId: User | Video | string; // likedVideo id or comment id etc. For followed, same as "by"
+	by: User | string; // followed by or liked by etc (id only)
+	read?: boolean;
+	createdAt?: Date | number;
 }
 
 export interface User {
@@ -32,12 +34,14 @@ export interface User {
 }
 
 export interface ExtendedUser
-	extends Omit<User, "followers" | "following" | "videos"> {
+	extends Omit<User, "followers" | "following" | "videos" | "notifications"> {
 	num?: number;
 	followers?: number | User[];
 	following?: number | User[];
 	isFollowing?: boolean;
-	videos?: Video[];
+	notifications?: any;
+	videos?: Video[] | User["videos"];
+	save?: any;
 }
 
 export const RefType = (ref: string) => ({
@@ -54,9 +58,17 @@ const NotificationSchema = new Schema<Notification>({
 		type: String,
 		required: true
 	},
+	refId: {
+		type: SchemaTypes.ObjectId,
+		required: true
+	},
 	by: {
 		...RefType("User"),
 		required: true
+	},
+	read: {
+		type: Boolean,
+		default: false
 	},
 	createdAt: {
 		type: Date,

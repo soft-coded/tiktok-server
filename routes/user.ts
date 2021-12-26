@@ -5,7 +5,8 @@ import {
 	getUser,
 	updateUser,
 	getPfp,
-	followOrUnfollow
+	followOrUnfollow,
+	readAllNotifs
 } from "../controllers/user";
 import { valRes, isValidUser, verifyToken } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
@@ -44,6 +45,24 @@ router.route("/follow").post(
 	valRes,
 	followOrUnfollow
 );
+
+router
+	.route("/readAllNotifications")
+	.post(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Username is required")
+			.bail()
+			.custom(isValidUser),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Token is required"),
+		valRes,
+		verifyToken,
+		readAllNotifs
+	);
 
 router
 	.route("/:username")
