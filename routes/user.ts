@@ -6,7 +6,8 @@ import {
 	updateUser,
 	getPfp,
 	followOrUnfollow,
-	readAllNotifs
+	readAllNotifs,
+	delOneNotif
 } from "../controllers/user";
 import { valRes, isValidUser, verifyToken } from "../controllers/validation";
 import { uploadPhoto } from "../utils/multer";
@@ -46,8 +47,32 @@ router.route("/follow").post(
 	followOrUnfollow
 );
 
+const notifRoute = "/notification";
+
 router
-	.route("/readAllNotifications")
+	.route(notifRoute)
+	.delete(
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Username is required")
+			.bail()
+			.custom(isValidUser),
+		body("notificationId")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("NotificationId is required"),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Token is required"),
+		valRes,
+		verifyToken,
+		delOneNotif
+	);
+
+router
+	.route(notifRoute + "/readAll")
 	.post(
 		body("username")
 			.trim()

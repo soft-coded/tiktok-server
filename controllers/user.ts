@@ -164,6 +164,51 @@ export const getPfp = asyncHandler(async (req, res) => {
 	res.sendFile(getRelativePath(constants.pfpFolder, user!.profilePhoto));
 });
 
+export async function createNotification(userId: string, data: Notification) {
+	// do nothing if it's the uploader's own action
+	if ((userId as any).equals(data.by)) return;
+
+	const user: ExtendedUser = (await UserModel.findById(
+		userId,
+		"notifications"
+	))!;
+
+	const notification = user.notifications.create(data);
+	user.notifications.push(notification);
+	await user.save();
+}
+
+type MetaType = {
+	type: Notification["type"];
+	refId: Notification["refId"];
+	by: Notification["by"];
+};
+
+export async function deleteNotification(
+	using: "ref" | "id",
+	userId: string,
+	idOrMeta: string | MetaType
+) {
+	if (using === "id") {
+		const user: ExtendedUser = (await UserModel.findById(
+			userId,
+			"notifications"
+		))!;
+		const notification = user.notifications.id(idOrMeta);
+		if (notification) {
+			notification.remove();
+			await user.save();
+		}
+		return;
+	}
+	// do nothing if it's the uploader's own action
+	if ((userId as any).equals((idOrMeta as MetaType).by)) return;
+
+	await UserModel.findByIdAndUpdate(userId, {
+		$pull: { notifications: idOrMeta }
+	}).exec();
+}
+
 export const followOrUnfollow = asyncHandler(async (req, res) => {
 	const loggedInAs = (await UserModel.findOne(
 		{ username: req.body.loggedInAs },
@@ -245,47 +290,12 @@ export const readAllNotifs = asyncHandler(async (req, res) => {
 	res.status(200).json(successRes());
 });
 
-export async function createNotification(userId: string, data: Notification) {
-	// do nothing if it's the uploader's own action
-	if ((userId as any).equals(data.by)) return;
+export const delOneNotif = asyncHandler(async (req, res) => {
+	const user = await UserModel.findOne(
+		{ username: req.body.username },
+		"_id"
+	).lean();
+	await deleteNotification("id", user!._id, req.body.notificationId);
 
-	const user: ExtendedUser = (await UserModel.findById(
-		userId,
-		"notifications"
-	))!;
-
-	const notification = user.notifications.create(data);
-	user.notifications.push(notification);
-	await user.save();
-}
-
-type MetaType = {
-	type: Notification["type"];
-	refId: Notification["refId"];
-	by: Notification["by"];
-};
-
-export async function deleteNotification(
-	using: "ref" | "id",
-	userId: string,
-	idOrMeta: string | MetaType
-) {
-	if (using === "id") {
-		const user: ExtendedUser = (await UserModel.findById(
-			userId,
-			"notifications"
-		))!;
-		const notification = user.notifications.id(idOrMeta);
-		if (notification) {
-			notification.remove();
-			await user.save();
-		}
-		return;
-	}
-	// do nothing if it's the uploader's own action
-	if ((userId as any).equals((idOrMeta as MetaType).by)) return;
-
-	await UserModel.findByIdAndUpdate(userId, {
-		$pull: { notifications: idOrMeta }
-	}).exec();
-}
+	res.status(200).json(successRes());
+});
