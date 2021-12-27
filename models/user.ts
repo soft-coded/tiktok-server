@@ -7,8 +7,9 @@ export interface Notification {
 	notificationId?: string;
 	type: "likedVideo" | "followed" | "commented" | "replied";
 	message: string;
-	refId: User | Video | string; // likedVideo id or comment id etc. For followed, same as "by"
+	refId: User | Video | string; // likedVideo id or comment id etc
 	by: User | string; // followed by or liked by etc (id only)
+	meta?: any; // videoId in case of "commented" or "replied", etc
 	read?: boolean;
 	createdAt?: Date | number;
 }
@@ -66,6 +67,7 @@ const NotificationSchema = new Schema<Notification>({
 		...RefType("User"),
 		required: true
 	},
+	meta: {},
 	read: {
 		type: Boolean,
 		default: false

@@ -361,7 +361,8 @@ export const comment = asyncHandler(async (req, res) => {
 		type: "commented",
 		message: req.body.username + " commented on your video: " + subComment,
 		refId: comment._id,
-		by: user._id
+		by: user._id,
+		meta: { videoId: video._id }
 	}).catch(err => console.error(err));
 });
 
@@ -492,7 +493,11 @@ export const reply = asyncHandler(async (req, res) => {
 		type: "replied",
 		message: req.body.username + " replied to your comment: " + subComment,
 		refId: reply._id,
-		by: user._id
+		by: user._id,
+		meta: {
+			videoId: video._id,
+			commentId: req.body.commentId
+		}
 	}).catch(err => console.error(err));
 });
 
@@ -527,7 +532,7 @@ export const deleteReply = asyncHandler(async (req, res) => {
 
 	// delete the notification
 	deleteNotification("ref", video.uploader as any, {
-		type: "commented",
+		type: "replied",
 		refId: reply._id,
 		by: reply.postedBy
 	}).catch(err => console.error(err));

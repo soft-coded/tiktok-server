@@ -194,6 +194,13 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 		})
 			.exec()
 			.catch(err => console.error(err));
+
+		// delete the notification
+		deleteNotification("ref", toFollow._id, {
+			type: "followed",
+			refId: toFollow._id,
+			by: loggedInAs._id
+		});
 	} else {
 		toFollow = (await UserModel.findOne(
 			{ username: req.body.toFollow },
@@ -213,6 +220,14 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 		})
 			.exec()
 			.catch(err => console.error(err));
+
+		// notify the person followed
+		createNotification(toFollow._id, {
+			type: "followed",
+			message: req.body.loggedInAs + " followed you.",
+			refId: toFollow._id,
+			by: loggedInAs._id
+		});
 	}
 
 	res.status(200).json(successRes({ followed }));
