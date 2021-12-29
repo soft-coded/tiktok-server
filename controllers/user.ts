@@ -47,19 +47,26 @@ export async function isFollowing(loggedInAs: string, toCheck: string) {
 export const getUser = asyncHandler(async (req, res) => {
 	const query: Query = req.query;
 	let projection =
-		"-_id -__v -interestedIn -password -profilePhoto -following -followers -videos";
+		"-_id -__v -interestedIn -password -profilePhoto -following -followers -videos -notifications";
 
 	if (query.name !== "1") projection += " -name";
 	if (query.email !== "1") projection += " -email";
 	if (query.description !== "1") projection += " -description";
 	if (query.totalLikes !== "1") projection += " -totalLikes";
 	if (query.createdAt !== "1") projection += " -createdAt";
-	if (query.notifications !== "1") projection += " -notifications";
 
 	const user: ExtendedUser = await UserModel.findOne(
 		{ username: req.params.username },
 		projection
 	).lean();
+
+	if (query.notifications === "1")
+		user.notifications = (await UserModel.findOne(
+			{ username: req.params.username },
+			"notifications -_id"
+		)
+			.populate("notifications.by", "username -_id")
+			.lean())!.notifications.reverse();
 
 	if (query.followers === "num")
 		user.followers = await getNum("followers", req.params.username);
@@ -269,13 +276,22 @@ export const followOrUnfollow = asyncHandler(async (req, res) => {
 		// notify the person followed
 		createNotification(toFollow._id, {
 			type: "followed",
-			message: req.body.loggedInAs + " followed you.",
+			message: "followed you.",
 			refId: toFollow._id,
 			by: loggedInAs._id
 		});
 	}
 
 	res.status(200).json(successRes({ followed }));
+});
+
+export const hasNewNotifs = asyncHandler(async (req, res) => {
+	const user: any = await UserModel.findOne(
+		{ username: req.body.username },
+		{ lastNotif: { $arrayElemAt: ["$notifications", -1] } }
+	).lean();
+
+	res.status(200).json(successRes({ hasNew: !user.lastNotif.read }));
 });
 
 export const readAllNotifs = asyncHandler(async (req, res) => {

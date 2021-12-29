@@ -318,7 +318,7 @@ export const likeOrUnlike = asyncHandler(async (req, res) => {
 		// notify the uploader
 		createNotification(video.uploader as any, {
 			type: "likedVideo",
-			message: req.body.username + " liked your video.",
+			message: "liked your video.",
 			refId: video._id,
 			by: liker._id
 		}).catch(err => console.error(err));
@@ -359,7 +359,7 @@ export const comment = asyncHandler(async (req, res) => {
 
 	createNotification(video.uploader as any, {
 		type: "commented",
-		message: req.body.username + " commented on your video: " + subComment,
+		message: "commented on your video: " + subComment,
 		refId: comment._id,
 		by: user._id,
 		meta: { videoId: video._id }
@@ -491,7 +491,7 @@ export const reply = asyncHandler(async (req, res) => {
 
 	createNotification(video.uploader as any, {
 		type: "replied",
-		message: req.body.username + " replied to your comment: " + subComment,
+		message: "replied to your comment: " + subComment,
 		refId: reply._id,
 		by: user._id,
 		meta: {
