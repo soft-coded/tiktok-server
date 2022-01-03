@@ -291,7 +291,11 @@ export const hasNewNotifs = asyncHandler(async (req, res) => {
 		{ lastNotif: { $arrayElemAt: ["$notifications", -1] } }
 	).lean();
 
-	res.status(200).json(successRes({ hasNew: !user.lastNotif.read }));
+	res
+		.status(200)
+		.json(
+			successRes({ hasNew: user.lastNotif ? !user.lastNotif.read : false })
+		);
 });
 
 export const readAllNotifs = asyncHandler(async (req, res) => {
