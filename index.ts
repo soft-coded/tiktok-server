@@ -10,7 +10,15 @@ config();
 const app = express();
 
 // setup
-app.use(cors());
+const whitelist = [process.env.WEBSITE_URL, "http://localhost:3000"];
+app.use(
+	cors({
+		origin: (origin, cb) => {
+			if (!origin || whitelist.indexOf(origin) > -1) cb(null, true);
+			else cb(new Error("Not allowed by CORS"));
+		}
+	})
+);
 app.use(express.json({ limit: "30mb" }));
 
 connect(process.env.DB_URL!)
