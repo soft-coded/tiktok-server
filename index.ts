@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
 import { connect } from "mongoose";
+import compression from "compression";
 
 import router from "./routes";
 import { handleError, CustomError } from "./utils/error";
@@ -20,6 +21,11 @@ app.use(
 	})
 );
 app.use(express.json({ limit: "30mb" }));
+app.use(
+	compression({
+		level: -1
+	})
+);
 
 connect(process.env.DB_URL!)
 	.then(() => console.log("Connected to database"))
