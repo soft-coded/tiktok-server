@@ -676,26 +676,61 @@ export const streamVideo = asyncHandler(async (req, res) => {
 		req.params.videoId,
 		"video -_id"
 	).lean())!;
-	const path = getRelativePath(constants.videosFolder, video.video);
-	const range = req.headers.range!;
+	const filePath = getRelativePath(constants.videosFolder, video.video);
 
-	const videoSize = statSync(path).size;
-	// range looks like: "bytes=32123-"
-	const start = Number(range.replace(/\D/g, "")); // get rid of all non digit characters
-	const end = Math.min(start + constants.chunkSize, videoSize - 1);
+	const options: any = {};
+	let start: number | null = null,
+		end: number | null = null;
 
-	// response headers
-	res.writeHead(206, {
-		"Content-Range": `bytes ${start}-${end}/${videoSize}`,
-		"Accept-Ranges": "bytes",
-		"Content-Length": end - start + 1,
-		"Content-Type": "video/mp4"
-	});
+	const range = req.headers.range;
+	if (range) {
+		const bytesPrefix = "bytes=";
+		if (range.startsWith(bytesPrefix)) {
+			const bytesRange = range.substring(bytesPrefix.length);
+			const parts = bytesRange.split("-");
+			if (parts.length === 2) {
+				const rangeStart = parts[0] && parts[0].trim();
+				if (rangeStart && rangeStart.length > 0)
+					options.start = start = +rangeStart;
 
-	const videoStream = createReadStream(path, {
-		start,
-		end,
-		highWaterMark: constants.chunkSize
-	});
-	videoStream.pipe(res);
+				const rangeEnd = parts[1] && parts[1].trim();
+				if (rangeEnd && rangeEnd.length > 0) options.end = end = +rangeEnd;
+			}
+		}
+	}
+
+	res.setHeader("content-type", "video/mp4");
+
+	const stat = statSync(filePath); // synchronous to automatically catch errors
+
+	const contentLength = stat.size;
+
+	if (/HEAD/i.test(req.method)) {
+		res.statusCode = 200;
+		res.setHeader("accept-ranges", "bytes");
+		res.setHeader("content-length", contentLength);
+		res.end();
+		return;
+	}
+
+	let retrievedLength: number;
+	if (start != null && end != null) retrievedLength = end + 1 - start;
+	else if (start != null) retrievedLength = contentLength - start;
+	else if (end != null) retrievedLength = end + 1;
+	else retrievedLength = contentLength;
+
+	res.statusCode = start != null || end != null ? 206 : 200;
+
+	res.setHeader("content-length", retrievedLength);
+
+	if (range) {
+		res.setHeader(
+			"content-range",
+			`bytes ${start || 0}-${end || contentLength - 1}/${contentLength}`
+		);
+		res.setHeader("accept-ranges", "bytes");
+	}
+
+	const fileStream = createReadStream(filePath, options);
+	fileStream.pipe(res);
 });

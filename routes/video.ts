@@ -68,9 +68,6 @@ router
 router
 	.route("/stream/:videoId")
 	.get(
-		header("range")
-			.exists({ checkFalsy: true })
-			.withMessage("Range header required"),
 		param("videoId")
 			.trim()
 			.exists({ checkFalsy: true })
