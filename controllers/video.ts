@@ -76,11 +76,11 @@ export const createVideo = asyncHandler(async (req, res) => {
 
 	res.status(201).json(successRes({ videoId: video._id }));
 	// add video to user's uploaded array and update the interestedIn array
-	UserModel.findByIdAndUpdate(user._id, {
-		$push: { "videos.uploaded": video._id, interestedIn: { $each: tagsArr } }
-	})
-		.exec() // !! exec() is important !!
-		.catch(err => console.error(err));
+	// UserModel.findByIdAndUpdate(user._id, {
+	// 	$push: { "videos.uploaded": video._id, interestedIn: { $each: tagsArr } }
+	// })
+	// 	.exec() // !! exec() is important !!
+	// 	.catch(err => console.error(err));
 });
 
 type Query = {
