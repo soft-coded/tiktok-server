@@ -48,7 +48,7 @@ export function valRes(req: Request, _: Response, next: NextFunction) {
 			removeFile(
 				req.file.filename,
 				req.file.fieldname === "video"
-					? constants.videosFolder
+					? constants.tempFolder
 					: constants.pfpFolder
 			);
 		throw new CustomError(400, vRes.array({ onlyFirstError: true })[0].msg);
@@ -73,7 +73,7 @@ export const verifyToken = asyncHandler(async (req, _, next) => {
 			removeFile(
 				req.file.filename,
 				req.file.fieldname === "video"
-					? constants.videosFolder
+					? constants.tempFolder
 					: constants.pfpFolder
 			);
 		throw new CustomError(403, "You are not allowed to perform this action");

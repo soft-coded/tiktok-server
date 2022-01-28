@@ -9,6 +9,7 @@ export default {
 	tagsMaxLen: 200,
 	musicMaxLen: 30,
 	commentMaxLen: 300,
+	tempFolder: "temp",
 	pfpFolder: "profile-photos",
 	videosFolder: "uploads",
 	chunkSize: 1048576 // 1MB

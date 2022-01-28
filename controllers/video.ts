@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { statSync, createReadStream } from "fs";
+import { run as runHandbrake } from "handbrake-js";
 
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
@@ -58,6 +59,16 @@ export const createVideo = asyncHandler(async (req, res) => {
 		"_id"
 	).lean())!;
 
+	// compress the video
+	await runHandbrake({
+		input: getRelativePath(constants.tempFolder, req.file.filename),
+		output: getRelativePath(constants.videosFolder, req.file.filename),
+		optimize: true,
+		encoder: "x264",
+		quality: 28,
+		aencoder: "av_aac"
+	});
+
 	let { caption, music, tags }: CreateVidQuery = req.body;
 	if (!music) music = req.body.username + " - original audio";
 	// split the "tags" string into array, remove all the hashtags from each string and then remove all the empty strings
@@ -73,14 +84,20 @@ export const createVideo = asyncHandler(async (req, res) => {
 		music,
 		tags: tagsArr
 	});
-
 	res.status(201).json(successRes({ videoId: video._id }));
+
+	// remove the uncompressed file
+	removeFile(req.file.filename, constants.tempFolder);
+
 	// add video to user's uploaded array and update the interestedIn array
-	// UserModel.findByIdAndUpdate(user._id, {
-	// 	$push: { "videos.uploaded": video._id, interestedIn: { $each: tagsArr } }
-	// })
-	// 	.exec() // !! exec() is important !!
-	// 	.catch(err => console.error(err));
+	UserModel.findByIdAndUpdate(user._id, {
+		$push: {
+			"videos.uploaded": video._id
+			// interestedIn: { $each: tagsArr }
+		}
+	})
+		.exec() // !! exec() is important !!
+		.catch(err => console.error(err));
 });
 
 type Query = {

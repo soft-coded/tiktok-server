@@ -12,13 +12,13 @@ function generateFileName(username: string, file: Express.Multer.File) {
 		"_" +
 		Date.now() +
 		Math.round(Math.random() * 1e9) +
-		file.originalname
+		extname(file.originalname)
 	);
 }
 
 const videoStorage = diskStorage({
 	destination: (_, __, cb) => {
-		cb(null, getRelativePath(constants.videosFolder));
+		cb(null, getRelativePath(constants.tempFolder));
 	},
 	filename: (req, file, cb) => {
 		cb(null, generateFileName(req.body.username, file));
@@ -59,7 +59,7 @@ function fileFilter(
 export const uploadVideo = multer({
 	storage: videoStorage,
 	limits: {
-		fileSize: 20971520, // 20MB
+		fileSize: 41943040, // 40MB
 		files: 1
 	},
 	fileFilter
