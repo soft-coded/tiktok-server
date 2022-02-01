@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body, param, header, query } from "express-validator";
+import { body, param, query } from "express-validator";
 
 import {
 	createVideo,
