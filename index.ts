@@ -10,12 +10,11 @@ import router from "./routes";
 import { compressVideo } from "./controllers/video";
 import { handleError, CustomError } from "./utils/error";
 
-const whitelist = [process.env.WEBSITE_URL, "http://localhost:3000"];
-
 config();
 const app = express();
 const server = createServer(app);
 
+const whitelist = [process.env.WEBSITE_URL, "http://localhost:3000"];
 type StaticOrigin = boolean | string | RegExp | (boolean | string | RegExp)[];
 function checkOrigin(
 	origin: string | undefined,
