@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { statSync, createReadStream } from "fs";
-import { run as runHandbrake } from "handbrake-js";
+import { Server, Socket } from "socket.io";
+import { run as runHandbrake, spawn as spawnHandbrake } from "handbrake-js";
 
 import { CustomError } from "../utils/error";
 import { successRes } from "../utils/success";
@@ -45,60 +46,90 @@ A single video object will look like this:
 }
 */
 
-type CreateVidQuery = {
-	caption: string;
-	music?: string;
-	tags: string;
-};
-
 export const createVideo = asyncHandler(async (req, res) => {
 	if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
 
-	const user = (await UserModel.findOne(
-		{ username: req.body.username },
-		"_id"
-	).lean())!;
+	res.json(successRes({ filename: req.file.filename }));
+});
 
-	// compress the video
-	await runHandbrake({
-		input: getRelativePath(constants.tempFolder, req.file.filename),
-		output: getRelativePath(constants.videosFolder, req.file.filename),
+interface UploadData {
+	filename: string;
+	username: string;
+	caption: string;
+	music?: string;
+	tags: string;
+}
+
+export function compressVideo(data: UploadData, socket: Socket) {
+	let isDone = false;
+	const process = spawnHandbrake({
+		input: getRelativePath(constants.tempFolder, data.filename),
+		output: getRelativePath(constants.videosFolder, data.filename),
 		optimize: true,
 		encoder: "x264",
 		quality: 28,
 		aencoder: "av_aac"
-	});
-
-	let { caption, music, tags }: CreateVidQuery = req.body;
-	if (!music) music = req.body.username + " - original audio";
-	// split the "tags" string into array, remove all the hashtags from each string and then remove all the empty strings
-	const tagsArr = tags
-		.split(" ")
-		.map(tag => tag.replace(/#/g, "").trim())
-		.filter(tag => tag);
-
-	const video = await VideoModel.create({
-		uploader: user._id,
-		video: req.file.filename,
-		caption,
-		music,
-		tags: tagsArr
-	});
-	res.status(201).json(successRes({ videoId: video._id }));
-
-	// remove the uncompressed file
-	removeFile(req.file.filename, constants.tempFolder);
-
-	// add video to user's uploaded array and update the interestedIn array
-	UserModel.findByIdAndUpdate(user._id, {
-		$push: {
-			"videos.uploaded": video._id
-			// interestedIn: { $each: tagsArr }
-		}
 	})
-		.exec() // !! exec() is important !!
-		.catch(err => console.error(err));
-});
+		.on("progress", progress => {
+			socket.emit("compressionProgress", {
+				percent: progress.percentComplete,
+				eta: progress.eta
+			});
+		})
+		.on("complete", async () => {
+			isDone = true;
+			const user = (await UserModel.findOne(
+				{ username: data.username },
+				"_id"
+			).lean())!;
+
+			let { caption, music, tags } = data;
+			if (!music) music = data.username + " - original audio";
+			// split the "tags" string into array, remove all the hashtags from each string and then remove all the empty strings
+			const tagsArr = tags
+				.split(" ")
+				.map(tag => tag.replace(/#/g, "").trim())
+				.filter(tag => tag);
+
+			const video = await VideoModel.create({
+				uploader: user._id,
+				video: data.filename,
+				caption,
+				music,
+				tags: tagsArr
+			});
+			// res.status(201).json(successRes({ videoId: video._id }));
+			socket.emit("compressionComplete", { videoId: video._id });
+
+			// remove the uncompressed file
+			removeFile(data.filename, constants.tempFolder);
+
+			// add video to user's uploaded array and update the interestedIn array
+			UserModel.findByIdAndUpdate(user._id, {
+				$push: {
+					"videos.uploaded": video._id
+					// interestedIn: { $each: tagsArr }
+				}
+			})
+				.exec() // !! exec() is important !!
+				.catch(err => console.error(err));
+		})
+		.on("cancelled", () => {
+			// doing this without a delay causes an error and the files aren't deleted
+			setTimeout(() => {
+				removeFile(data.filename, constants.tempFolder);
+				removeFile(data.filename, constants.videosFolder);
+			}, 1000);
+		});
+
+	function cancel() {
+		if (isDone) return;
+		process.cancel();
+	}
+
+	socket.on("cancelCompression", cancel);
+	socket.on("disconnect", cancel);
+}
 
 type Query = {
 	username?: string;
