@@ -5,10 +5,14 @@ import { connect } from "mongoose";
 import compression from "compression";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 import router from "./routes";
 import { compressVideo } from "./controllers/video";
 import { handleError, CustomError } from "./utils/error";
+import { getRelativePath } from "./utils/fileHander";
+import constants from "./utils/constants";
 
 config();
 const app = express();
@@ -44,6 +48,15 @@ io.on("connection", socket => {
 
 	socket.on("finaliseFile", data => compressVideo(data, socket));
 });
+
+// folder creation
+const publicFolder = join(process.cwd(), "public");
+if (!existsSync(publicFolder)) {
+	mkdirSync(publicFolder);
+	mkdirSync(getRelativePath(constants.videosFolder));
+	mkdirSync(getRelativePath(constants.pfpFolder));
+	mkdirSync(getRelativePath(constants.tempFolder));
+}
 
 // routing
 app.use(router);
