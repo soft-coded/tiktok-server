@@ -120,6 +120,13 @@ export function compressVideo(data: UploadData, socket: Socket) {
 				removeFile(data.filename, constants.tempFolder);
 				removeFile(data.filename, constants.videosFolder);
 			}, 1000);
+		})
+		.on("error", err => {
+			socket.emit("compressionError", err);
+			setTimeout(() => {
+				removeFile(data.filename, constants.tempFolder);
+				removeFile(data.filename, constants.videosFolder);
+			}, 1000);
 		});
 
 	function cancel() {
