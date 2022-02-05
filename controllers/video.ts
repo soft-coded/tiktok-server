@@ -520,9 +520,11 @@ export const reply = asyncHandler(async (req, res) => {
 	))!;
 	const video: ExtendedVideo = (await VideoModel.findById(
 		req.body.videoId,
-		"comments.replies comments._id uploader"
+		"comments.replies comments.postedBy comments._id uploader"
 	))!;
-	const replies = video.comments.id(req.body.commentId).replies;
+
+	const comment = video.comments.id(req.body.commentId);
+	const replies = comment.replies;
 
 	const reply = replies.create({
 		postedBy: user._id,
@@ -544,7 +546,7 @@ export const reply = asyncHandler(async (req, res) => {
 	if (req.body.comment.length < 31) subComment = req.body.comment;
 	else subComment = req.body.comment.substring(0, 30) + "...";
 
-	createNotification(video.uploader as any, {
+	createNotification(comment.postedBy as any, {
 		type: "replied",
 		message: "replied to your comment: " + subComment,
 		refId: reply._id,
