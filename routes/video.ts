@@ -81,6 +81,7 @@ router
 router
 	.route("/like")
 	.post(
+		body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -94,12 +95,14 @@ router
 			.bail()
 			.custom(isValidVideo),
 		valRes,
+		verifyToken,
 		likeOrUnlike
 	);
 
 router
 	.route("/comment")
 	.post(
+		body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -121,6 +124,7 @@ router
 				`Comment cannot have more than ${constants.commentMaxLen} characters.`
 			),
 		valRes,
+		verifyToken,
 		comment
 	)
 	.delete(
@@ -154,6 +158,7 @@ router
 router
 	.route("/likeComment")
 	.post(
+		body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -173,12 +178,14 @@ router
 			.bail()
 			.custom(isValidComment),
 		valRes,
+		verifyToken,
 		likeOrUnlikeComment
 	);
 
 router
 	.route("/reply")
 	.post(
+		body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -206,6 +213,7 @@ router
 				`Reply cannot be more than ${constants.commentMaxLen} characters`
 			),
 		valRes,
+		verifyToken,
 		reply
 	)
 	.delete(
@@ -243,6 +251,7 @@ router
 router
 	.route("/likeReply")
 	.post(
+		body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 		body("username")
 			.trim()
 			.exists({ checkFalsy: true })
@@ -262,6 +271,7 @@ router
 			.bail()
 			.custom(isValidComment),
 		valRes,
+		verifyToken,
 		likeOrUnlikeReply
 	);
 

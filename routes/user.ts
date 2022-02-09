@@ -30,6 +30,7 @@ router
 	);
 
 router.route("/follow").post(
+	body("token").exists({ checkFalsy: true }).withMessage("Token is required"),
 	body("toFollow")
 		.trim()
 		.exists({ checkFalsy: true })
@@ -45,6 +46,7 @@ router.route("/follow").post(
 		.custom((val, { req }) => val !== req.body.toFollow)
 		.withMessage("You cannot follow yourself"),
 	valRes,
+	verifyToken,
 	followOrUnfollow
 );
 

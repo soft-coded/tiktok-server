@@ -60,6 +60,7 @@ export const verifyToken = asyncHandler(async (req, _, next) => {
 	try {
 		let username: string;
 		if (req.body.username) username = req.body.username;
+		else if (req.body.loggedInAs) username = req.body.loggedInAs;
 		else username = req.params.username;
 
 		const DBUser = await UserModel.findOne({ username }, "username -_id");
