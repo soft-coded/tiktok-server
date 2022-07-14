@@ -44,8 +44,6 @@ connect(process.env.DB_URL!)
 
 // socket.io connection
 io.on("connection", socket => {
-	console.log("socket connected on", socket.id);
-
 	socket.on("finaliseFile", data => compressVideo(data, socket));
 });
 

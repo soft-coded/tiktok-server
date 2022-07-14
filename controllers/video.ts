@@ -47,9 +47,14 @@ A single video object will look like this:
 */
 
 export const createVideo = asyncHandler(async (req, res) => {
-	if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
+	throw new CustomError(
+		400,
+		"Video uploading has been temporarily disabled due to many cases of people uploading vulgar videos."
+	);
 
-	res.json(successRes({ filename: req.file.filename }));
+	// if (!req.file) throw new CustomError(500, "Video upload unsuccessful");
+
+	// res.json(successRes({ filename: req.file.filename }));
 });
 
 interface UploadData {
