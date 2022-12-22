@@ -29,44 +29,41 @@ import constants from "../utils/constants";
 
 const router = Router();
 
-router.route("/create").post(
-	uploadVideo.single("video"),
-	body("username")
-		.trim()
-		.exists({ checkFalsy: true })
-		.withMessage("Log in to continue")
-		.bail()
-		.custom(isValidUser),
-	body("caption")
-		.trim()
-		.exists({ checkFalsy: true })
-		.withMessage("Caption is required")
-		.isLength({ max: constants.captionMaxLen })
-		.withMessage("Caption too long"),
-	body("tags")
-		.trim()
-		.exists({ checkFalsy: true })
-		.withMessage("At least 1 tag is required")
-		.isLength({ max: constants.tagsMaxLen })
-		.withMessage("Too many tags"),
-	body("music")
-		.optional()
-		.trim()
-		.isLength({ max: constants.musicMaxLen })
-		.withMessage("Music credit too long"),
-	body("token")
-		.trim()
-		.exists({ checkFalsy: true })
-		.withMessage("Token is required")
-		.custom(() => {
-			throw new Error(
-				"Video uploading has been temporarily disabled due to many cases of people uploading vulgar videos."
-			);
-		}),
-	valRes,
-	verifyToken,
-	createVideo
-);
+router
+	.route("/create")
+	.post(
+		uploadVideo.single("video"),
+		body("username")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Log in to continue")
+			.bail()
+			.custom(isValidUser),
+		body("caption")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Caption is required")
+			.isLength({ max: constants.captionMaxLen })
+			.withMessage("Caption too long"),
+		body("tags")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("At least 1 tag is required")
+			.isLength({ max: constants.tagsMaxLen })
+			.withMessage("Too many tags"),
+		body("music")
+			.optional()
+			.trim()
+			.isLength({ max: constants.musicMaxLen })
+			.withMessage("Music credit too long"),
+		body("token")
+			.trim()
+			.exists({ checkFalsy: true })
+			.withMessage("Token is required"),
+		valRes,
+		verifyToken,
+		createVideo
+	);
 
 router
 	.route("/stream/:videoId")
